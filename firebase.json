@@ -1,0 +1,65 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "zipind-57",
+          "appId": "1:676005468146:android:0d2cf99ed8b80f8e40fd6b",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "zipind-57",
+          "appId": "1:676005468146:ios:2e1a49e74843f79d40fd6b",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "zipind-57",
+          "configurations": {
+            "android": "1:676005468146:android:0d2cf99ed8b80f8e40fd6b",
+            "ios": "1:676005468146:ios:2e1a49e74843f79d40fd6b"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "LockifyFrontend/dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "regex": "/[A-Za-z0-9]{6}",
+        "destination": "/lockedMessages.html"
+      },
+      {
+        "source": "/**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

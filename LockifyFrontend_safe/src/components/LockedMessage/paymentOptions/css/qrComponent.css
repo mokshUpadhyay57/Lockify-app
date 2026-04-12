@@ -1,0 +1,87 @@
+/* Outer wrapper */
+.upi-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f5f7ff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* Status text above QR */
+.upi-status {
+  font-size: 14px;
+  color: #4b5563;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.upi-header {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.upi-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.upi-timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.upi-timer-icon {
+  font-size: 13px;
+}
+
+.upi-timer-text {
+  font-weight: 500;
+}
+
+/* QR mount container */
+.upi-qr-mount {
+  width: 190px;
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pay button next to QR */
+.upi-btn {
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #4c63ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.upi-btn:not(:disabled):hover {
+  background: #3a4de0;
+  box-shadow: 0 4px 10px rgba(76, 99, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.upi-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

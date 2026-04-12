@@ -1,0 +1,147 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helper Functions ---
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Extract last 10 digits safely
+    function getNormalizedPhone(phone) {
+      return string(phone).size() >= 10 
+        ? string(phone)[(string(phone).size() - 10) : string(phone).size()] 
+        : string(phone);
+    }
+
+    // Fetch the current user's phone from their profile document
+    function getUserPhone() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('phone', '');
+    }
+
+    // Purchases owned by UID (new model) or normalized phone (legacy docs)
+    function isPurchaseOwner(data) {
+      let buyerId = data.get('buyerId', '');
+      if (buyerId != '') {
+        return buyerId == request.auth.uid;
+      }
+
+      let buyerPhone = getNormalizedPhone(data.get('buyerPhone', ''));
+      let tokenPhone = request.auth.token.get('phone_number', null);
+      let profilePhone = getUserPhone();
+
+      let normalizedTokenPhone = tokenPhone != null ? getNormalizedPhone(tokenPhone) : '';
+      let normalizedProfilePhone = profilePhone != '' ? getNormalizedPhone(profilePhone) : '';
+
+      return buyerPhone != '' && (
+        buyerPhone == normalizedTokenPhone ||
+        buyerPhone == normalizedProfilePhone
+      );
+    }
+
+    // Anonymous fallback for old phone-keyed purchases.
+    function isAnonymousLegacyPurchase(data) {
+      return data.get('buyerId', '') == '' && data.get('buyerPhone', '') != '';
+    }
+
+    // Check if user is a participant in a room
+    function isParticipant(data) {
+      let uid = request.auth.uid;
+      let tokenPhone = request.auth.token.get('phone_number', null);
+      let profilePhone = getUserPhone();
+      
+      let normalizedTokenPhone = tokenPhone != null ? getNormalizedPhone(tokenPhone) : "NO_TOKEN_PHONE";
+      let normalizedProfilePhone = profilePhone != "" ? getNormalizedPhone(profilePhone) : "NO_PROFILE_PHONE";
+      
+      let uids = data.get('participantUids', []);
+      let phones = data.get('participantPhones', []);
+      
+      return isAuthenticated() && (
+        (uid in uids) || 
+        (normalizedTokenPhone in phones) || 
+        (normalizedProfilePhone in phones)
+      );
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+
+      match /memberships/{roomId} {
+        allow read: if isOwner(userId);
+        allow write: if isAuthenticated(); 
+      }
+    }
+
+    match /chat_rooms/{roomId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource == null || isParticipant(resource.data));
+      allow update, delete: if isAuthenticated() && isParticipant(resource.data);
+      
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated(); 
+      }
+    }
+
+    match /groups/{groupId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource == null || isParticipant(resource.data));
+      allow update, delete: if isAuthenticated() && isParticipant(resource.data);
+
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+      }
+      match /members/{memberId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    match /channels/{channelId} {
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource == null || isParticipant(resource.data));
+      allow update, delete: if isAuthenticated() && isParticipant(resource.data);
+
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+      }
+      match /members/{memberId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    match /lockedMessages/{messageId} {
+      allow read: if true; 
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (resource == null || resource.data.get('createdBy', '') == request.auth.uid);
+    }
+
+    match /polls/{pollId} {
+      allow read, create, update: if isAuthenticated();
+    }
+
+    match /purchases/{purchaseId} {
+      // Reads: prefer buyerId ownership, support legacy phone-only purchase docs.
+      allow get: if (
+        isAuthenticated() && isPurchaseOwner(resource.data)
+      ) || (
+        !isAuthenticated() && isAnonymousLegacyPurchase(resource.data)
+      );
+      // Queries should continue to use where('buyerId', '==', request.auth.uid) for indexed reads.
+      allow list: if isAuthenticated() && resource.data.get('buyerId', '') == request.auth.uid;
+      // Purchases are finalized by backend functions (admin SDK), not client writes.
+      allow create, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

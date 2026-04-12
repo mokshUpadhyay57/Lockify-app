@@ -1,0 +1,12 @@
+{
+    "editor.fontSize": 14,
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": false
+    },
+    "dart.lineLength": 120,
+    "editor.mouseWheelZoom": true,
+    "terminal.integrated.suggest.enabled": true,
+    
+}

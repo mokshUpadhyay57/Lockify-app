@@ -1,0 +1,239 @@
+/* Login Modal Styles */
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.login-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 32px rgba(80, 0, 120, 0.13);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  min-width: 320px;
+  max-width: 95vw;
+  position: relative;
+  animation: modalIn 0.2s ease;
+}
+.login-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #a21caf;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+}
+@keyframes modalIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* Preheader styles */
+/* Enhanced Preheader Styles */
+.preheader {
+  background: linear-gradient(90deg, #6366f1 0%, #a21caf 100%);
+  color: #fff;
+  font-size: 1rem;
+  padding: 7px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(80, 0, 120, 0.06);
+  letter-spacing: 0.01em;
+}
+.preheader-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+.preheader-contact {
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 500;
+}
+.preheader-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1.12rem;
+  transition: color 0.2s;
+}
+.preheader-link:hover,
+.preheader-link:focus {
+  color: #ffe066;
+  text-decoration: underline;
+}
+.preheader-icon {
+  color: #ffe066;
+  font-size: 1.1em;
+}
+.preheader-right {
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+.preheader-social {
+  color: #fff;
+  font-size: 1.12rem;
+  transition: color 0.2s, transform 0.2s;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.preheader-social:hover,
+.preheader-social:focus {
+  color: #ffe066;
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.15);
+}
+@media (max-width: 600px) {
+  .preheader {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 7px 8px;
+    font-size: 0.97rem;
+  }
+  .preheader-left {
+    gap: 1rem;
+  }
+  .preheader-right {
+    gap: 0.7rem;
+    margin-top: 4px;
+  }
+}
+
+.admin-header-bar {
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(80, 0, 120, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  border-bottom: 1.5px solid #e0e7ff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-header-logo img {
+  width: 60px;
+  /* adjust size */
+  height: 60px;
+  /* makes shape consistent */
+  border-radius: 12px;
+  /* rounded corners */
+  object-fit: cover;
+  /* perfect crop */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  /* soft shadow */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Optional: nice hover effect */
+.admin-header-logo img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+}
+
+/* Light Blue overlay */
+.admin-header-logo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(100, 170, 255, 0.5);
+  /* Light Blue tint */
+  mix-blend-mode: lighten;
+  /* magic happens here */
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.admin-header-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #6366f1;
+  letter-spacing: -1px;
+}
+
+.admin-header-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.admin-header-link {
+  color: #6366f1;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.12rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+.admin-header-link:hover,
+.admin-header-link:focus {
+  /* background: #e0e7ff; */
+  color: #a21caf;
+}
+
+/* Hamburger menu styles */
+.hamburger {
+  display: none;
+}
+
+
+
+/* Mobile styles */
+@media (max-width: 800px) {
+
+  .hamburger{
+    display: block;
+    cursor: pointer;
+  }
+
+  .hamburger img {
+    width: 30px;
+    height: 30px;
+    filter: invert(36%) sepia(86%) saturate(3255%) hue-rotate(218deg) brightness(95%) contrast(88%);
+  }
+
+  .admin-header-nav {
+    display: none; /* hide nav on mobile */
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    /* background-color: white; */
+    backdrop-filter: blur(10px);
+    padding: 1rem 0;
+    gap: 1rem;
+  } 
+
+  .admin-header-link {
+    background-color: transparent;
+    width: 100%;
+    padding: 0.5rem 2rem;
+    display: flex;
+    justify-content: right;
+  }
+}

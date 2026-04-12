@@ -1,0 +1,112 @@
+.upi-modal {
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #f9fafb;
+}
+
+/* Header */
+
+
+/* QR card wrapper (QrComponent sits inside) */
+.upi-qr-card {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f5f7ff;
+  border: 1px solid #e5e7eb;
+}
+
+/* Divider */
+.upi-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0;
+  position: relative;
+}
+
+.upi-divider::before,
+.upi-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e0e0e5;
+}
+
+.upi-divider span {
+  margin: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* UPI ID section */
+.upi-id-section {
+  padding: 12px 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.upi-id-subtitle {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.upi-id-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Input + button */
+.upi-input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d4d4dd;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+}
+
+.upi-input:focus {
+  border-color: #4c63ff;
+  box-shadow: 0 0 0 1px rgba(76, 99, 255, 0.12);
+}
+
+.upi-id-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #4c63ff;
+  color: #ffffff;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+
+.upi-id-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.upi-id-btn:not(:disabled):hover {
+  background: #3b4fe0;
+  box-shadow: 0 4px 10px rgba(76, 99, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Error text */
+.upi-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #d93025;
+}

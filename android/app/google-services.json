@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "676005468146",
+    "project_id": "zipind-57",
+    "storage_bucket": "zipind-57.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676005468146:android:0d2cf99ed8b80f8e40fd6b",
+        "android_client_info": {
+          "package_name": "com.example.lockify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "676005468146-6vg9auce693mm5q7se1kpohi032hulhn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lockify",
+            "certificate_hash": "f4b8824c3549f18939cd46173e1bbd0f1b01fa06"
+          }
+        },
+        {
+          "client_id": "676005468146-hpue6u3mq7lo2g1auev25iccmj806jie.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnpJqjDQ9h8NfzspmhwKzC9z3X4eY9uYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "676005468146-hpue6u3mq7lo2g1auev25iccmj806jie.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "676005468146-0c14kcaa9hd0lk52ujdq9h89dje3c760.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lockify"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
