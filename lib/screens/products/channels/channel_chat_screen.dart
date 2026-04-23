@@ -64,7 +64,6 @@ class _ChannelDetailPageState extends State<ChannelDetailPage> with ChatDateMixi
     }
     try {
       await _mediaService.sendChannelMediaMessage(
-        context: context,
         channelId: widget.channelId,
         file: file,
         type: type,
@@ -355,4 +354,3 @@ class _ChannelDetailPageState extends State<ChannelDetailPage> with ChatDateMixi
     );
   }
 }
-

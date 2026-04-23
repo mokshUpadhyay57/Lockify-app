@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -97,7 +97,6 @@ class MediaService {
 
   // Backward Compatibility / Convenience Wrappers (Optional but helpful for MVP)
   Future<void> sendMediaMessage({
-    required BuildContext context,
     required String receiverPhone,
     required File? file,
     required MediaType type,
@@ -132,7 +131,6 @@ class MediaService {
   }
 
   Future<void> sendGroupMediaMessage({
-    required BuildContext context,
     required String groupId,
     required File? file,
     required MediaType type,
@@ -151,7 +149,6 @@ class MediaService {
   }
 
   Future<void> sendChannelMediaMessage({
-    required BuildContext context,
     required String channelId,
     required File? file,
     required MediaType type,
@@ -194,7 +191,7 @@ class MediaService {
         await query.docs.first.reference.update({'imageUrl': url});
       }
     } catch (e) {
-      print("Background upload error: $e");
+      debugPrint("Background upload error: $e");
     }
   }
 }

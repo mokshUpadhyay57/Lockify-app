@@ -59,7 +59,6 @@ class _ChatDetailPageState extends State<ChatDetailPage> with ChatDateMixin {
 
     try {
       await _mediaService.sendMediaMessage(
-        context: context,
         receiverPhone: widget.recieverPhone,
         file: file,
         type: type,
@@ -376,4 +375,3 @@ class _StatusText extends StatelessWidget {
     );
   }
 }
-

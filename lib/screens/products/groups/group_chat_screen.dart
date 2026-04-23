@@ -67,7 +67,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> with ChatDateMixin {
     }
     try {
       await _mediaService.sendGroupMediaMessage(
-        context: context,
         groupId: widget.groupId,
         file: file,
         type: type,
@@ -360,4 +359,3 @@ class _GroupChatScreenState extends State<GroupChatScreen> with ChatDateMixin {
     );
   }
 }
-
