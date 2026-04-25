@@ -5,34 +5,39 @@ Lockify is a high-performance, multi-platform messaging and creator platform bui
 ## 🚀 Key Features
 
 ### 📨 Advanced Messaging Engine
-*   **Conversation Types:** Production-grade 1-1 Private Chats, community Groups with admin controls, and high-scale broadcast Channels.
-*   **Real-Time Presence:** Global status tracking (Online/Offline) with visual indicators across all lists and chat headers.
-*   **Atomic Consistency:** Powered by Firestore `WriteBatch` to ensure message previews and history are always in perfect sync.
+
+- **Conversation Types:** Production-grade 1-1 Private Chats, community Groups with admin controls, and high-scale broadcast Channels.
+- **Real-Time Presence:** Global status tracking (Online/Offline) with visual indicators across all lists and chat headers.
+- **Atomic Consistency:** Powered by Firestore `WriteBatch` to ensure message previews and history are always in perfect sync.
 
 ### 🖼️ Rich Media & Interactive Tools
-*   **High-Speed Media:** Instant sending of Images and Videos with WebP compression and Base64 thumbnails for zero-latency UI feedback.
-*   **Interactive Polls:** Create, vote, and track live percentage results within any conversation.
-*   **Document Support:** Send and preview various file types with a dedicated document UI.
+
+- **High-Speed Media:** Instant sending of Images and Videos with WebP compression and Base64 thumbnails for zero-latency UI feedback.
+- **Interactive Polls:** Create, vote, and track live percentage results within any conversation.
+- **Document Support:** Send and preview various file types with a dedicated document UI.
 
 ### 🔒 Content Monetization
-*   **Locked Messages:** Premium content hidden behind paywalls, allowing creators to monetize exclusive photos, videos, or texts.
-*   **Paid Subscriptions:** Monetize broadcast channels with recurring subscription tiers.
-*   **Creator Dashboard:** Real-time earnings analytics, subscriber tracking, and monthly revenue data.
+
+- **Locked Messages:** Premium content hidden behind paywalls, allowing creators to monetize exclusive photos, videos, or texts.
+- **Paid Subscriptions:** Monetize broadcast channels with recurring subscription tiers.
+- **Creator Dashboard:** Real-time earnings analytics, subscriber tracking, and monthly revenue data.
 
 ### 👤 Identity & Privacy
-*   **Local Contact Priority:** Intelligent resolution that prioritizes names from the user's local address book for a personalized experience.
-*   **Privacy-First:** Secure multi-provider authentication (Google, Email, Phone) with standardized identity resolution.
+
+- **Local Contact Priority:** Intelligent resolution that prioritizes names from the user's local address book for a personalized experience.
+- **Privacy-First:** Secure multi-provider authentication (Google, Email, Phone) with standardized identity resolution.
 
 ---
 
 ## 🏗️ Architecture & Tech Stack
 
-*   **Frontend:** Flutter SDK (Clean Architecture / Service-based pattern)
-*   **Backend:** Firebase (Auth, Firestore, Cloud Functions, Storage)
-*   **UI Components:** Atomic design using unified components (`ChatInput`, `MessageBubble`, `ChatListItem`)
-*   **State Management:** Native reactive Streams and StreamControllers (Zero RxDart overhead)
+- **Frontend:** Flutter SDK (Clean Architecture / Service-based pattern)
+- **Backend:** Firebase (Auth, Firestore, Cloud Functions, Storage)
+- **UI Components:** Atomic design using unified components (`ChatInput`, `MessageBubble`, `ChatListItem`)
+- **State Management:** Native reactive Streams and StreamControllers (Zero RxDart overhead)
 
 ### Folder Structure
+
 ```text
 lib/
 ├── components/       # Unified Atomic UI widgets
@@ -48,11 +53,13 @@ lib/
 ## 🛠️ Getting Started
 
 ### Prerequisites
-*   Flutter SDK (3.x recommended)
-*   Firebase CLI & Account
-*   Android Studio / Xcode (for platform-specific builds)
+
+- Flutter SDK (3.x recommended)
+- Firebase CLI & Account
+- Android Studio / Xcode (for platform-specific builds)
 
 ### Installation
+
 1.  **Clone the repository:**
     ```bash
     git clone https://github.com/mokshupadhyay57/lockify.git
@@ -71,13 +78,37 @@ lib/
 
 ---
 
+    ## 🧪 Development (Cloud Functions)
+
+    * To run Cloud Functions locally:
+    ```bash
+    cd functions
+    npm install
+    npm run serve
+    ```
+
+    * To use the functions shell:
+    ```bash
+    npm run shell
+    ```
+
+    * To deploy functions to Firebase:
+    ```bash
+    npm run deploy
+    ```
+
+    **Last updated:** 2026-04-25
+
 ## 📈 Roadmap & Scaling
+
 Lockify is designed for infinite scale. Future milestones include:
-*   **Subcollection Membership:** Transitioning to subcollections for handling 100k+ group members.
-*   **Atomic Transactions:** Implementing `runTransaction` for critical wallet and payout operations.
-*   **Push Notifications:** Cloud-triggered engagement alerts for new messages and sales.
+
+- **Subcollection Membership:** Transitioning to subcollections for handling 100k+ group members.
+- **Atomic Transactions:** Implementing `runTransaction` for critical wallet and payout operations.
+- **Push Notifications:** Cloud-triggered engagement alerts for new messages and sales.
 
 ---
 
 ## 📄 License
+
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
