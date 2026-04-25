@@ -5,6 +5,7 @@ const COLLECTIONS = {
   orders: "orders",
   lockedMessages: "lockedMessages",
   orderItems: "order-items",
+  purchases: "purchasgit es",
   wallets: "wallets",
   walletTransactions: "wallet_transactions",
 };
@@ -52,6 +53,10 @@ async function findBuyerUidByPhone(normalizedPhone) {
 
 function getOrderItemId(buyerPhone, lockedMessageId) {
   return `${buyerPhone}_${lockedMessageId}`;
+}
+
+function getPurchaseId(buyerId, buyerPhone, lockedMessageId) {
+  return `${buyerId || buyerPhone}_${lockedMessageId}`;
 }
 
 function getWalletTxId(orderId) {
@@ -110,6 +115,14 @@ async function resolveFinalizationContext(transaction, {
   const orderItemRef = db.collection(COLLECTIONS.orderItems).doc(orderItemId);
   const orderItemSnap = await transaction.get(orderItemRef);
 
+  const purchaseId = getPurchaseId(
+    resolvedBuyerId,
+    resolvedBuyerPhone,
+    resolvedLockedMessageId,
+  );
+  const purchaseRef = db.collection(COLLECTIONS.purchases).doc(purchaseId);
+  const purchaseSnap = await transaction.get(purchaseRef);
+
   const walletRef = db.collection(COLLECTIONS.wallets).doc(creatorId);
   const walletSnap = await transaction.get(walletRef);
 
@@ -131,6 +144,9 @@ async function resolveFinalizationContext(transaction, {
     orderItemId,
     orderItemRef,
     isNewOrderItem: !orderItemSnap.exists,
+    purchaseId,
+    purchaseRef,
+    purchaseExists: purchaseSnap.exists,
     walletRef,
     walletSnap,
     walletTransactionId,
@@ -140,7 +156,10 @@ async function resolveFinalizationContext(transaction, {
 }
 
 function isReplayAlreadyProcessed(context) {
-  return !context.isNewOrderItem && context.orderWasPaid && context.walletTxExists;
+  return !context.isNewOrderItem
+    && context.purchaseExists
+    && context.orderWasPaid
+    && context.walletTxExists;
 }
 
 function writeOrderAndEntitlement(transaction, context, { source, cfPaymentId }) {
@@ -169,6 +188,22 @@ function writeOrderAndEntitlement(transaction, context, { source, cfPaymentId })
       buyerPhone: context.resolvedBuyerPhone,
       buyerId: context.resolvedBuyerId || null,
       orderId: context.orderId,
+      pricePaid: context.numericAmount,
+      creatorId: context.creatorId,
+      purchasedAt: now,
+      source: source || "payment",
+    },
+    { merge: true },
+  );
+
+  transaction.set(
+    context.purchaseRef,
+    {
+      lockedMessageId: context.resolvedLockedMessageId,
+      buyerPhone: context.resolvedBuyerPhone,
+      buyerId: context.resolvedBuyerId || null,
+      orderId: context.orderId,
+      orderItemId: context.orderItemId,
       pricePaid: context.numericAmount,
       creatorId: context.creatorId,
       purchasedAt: now,
@@ -305,4 +340,3 @@ module.exports = {
   finalizePaidOrder,
   normalizePhone,
 };
-

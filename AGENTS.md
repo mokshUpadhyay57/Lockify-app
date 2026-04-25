@@ -1,30 +1,163 @@
-# Repository Guidelines
+# ⚙️ AGENTS.md — Pre-Modification Rules & Execution Guide
 
-## Project Structure & Module Organization
-`lib/` contains the Flutter app. Reusable widgets live in `lib/components/`, screen-level UI in `lib/screens/`, data classes in `lib/models/`, and shared helpers in `lib/utils/`. App entry points are `lib/main.dart` and `lib/home_screen.dart`; Firebase client config is in `lib/firebase_options.dart`.
+## 🚫 Critical Rules (Must Follow First)
 
-Platform runners are in `android/`, `ios/`, `web/`, `windows/`, `linux/`, and `macos/`. Web-facing static pages and assets are in `public/`. Firebase Cloud Functions are isolated in `functions/` with their own `package.json`. Tests currently live in `test/`.
+1. DO NOT create new files unless explicitly instructed  
+2. ALWAYS check existing files before making changes  
+3. MODIFY existing code instead of creating new implementations  
+4. DO NOT duplicate logic, widgets, or functions  
+5. KEEP changes minimal, focused, and scoped  
 
-## Build, Test, and Development Commands
-- `flutter pub get`: install Dart and Flutter dependencies.
-- `flutter run`: launch the app on the selected device or emulator.
-- `flutter analyze`: run static analysis using `analysis_options.yaml`.
-- `dart format lib test`: apply standard Dart formatting before committing.
-- `flutter test`: run widget and unit tests from `test/`.
-- `flutter build apk` or `flutter build web`: produce Android or web builds.
-- `cd functions && npm install`: install Cloud Functions dependencies.
-- `cd functions && npm run serve`: start the Firebase Functions emulator.
-- `cd functions && npm run deploy`: deploy functions to Firebase.
+---
 
-## Coding Style & Naming Conventions
-Use standard Dart style: 2-space indentation, trailing commas where Flutter formatting expects them, and `dart format` as the source of truth. Follow the existing lowercase_with_underscores file naming used by files like `purchase_screen.dart` and `dotted_border_box.dart`. Keep widgets, models, and helpers small and feature-focused. Use `flutter analyze` to catch lint issues; the repo inherits `flutter_lints` and currently ignores `unused_local_variable`.
+## 🧠 Agent Role
 
-For `functions/index.js`, keep JavaScript simple and modular, and avoid mixing frontend concerns into backend handlers.
+Act as a **Senior Engineer + Product Thinker**
 
-## Testing Guidelines
-Add Flutter tests under `test/` and prefer names ending in `_test.dart`. Mirror the production area when practical, for example `test/screens/purchase_screen_test.dart`. Run `flutter test` before opening a PR. If you change Firebase Functions, validate them locally with `npm run serve` before deployment.
+- Focus on practical, buildable solutions  
+- Prioritize simplicity and speed  
+- Avoid unnecessary complexity  
+- Respect existing architecture  
 
-## Commit & Pull Request Guidelines
-History is sparse, but existing messages are short and imperative. Continue with concise subjects like `Add locked message admin view` or `Fix purchase screen validation`. Keep commits scoped to one change.
+---
 
-PRs should include a brief summary, testing notes, linked issues, and screenshots or recordings for UI changes. Call out Firebase config, emulator steps, or deploy impact when touching `functions/`, `public/`, or platform-specific setup.
+## 🔍 Step 1 — Understand the Task
+
+Before writing code:
+
+- Identify:
+  - Feature / bug / requirement
+  - Target user
+  - Core problem
+
+**Goal:**
+- Clearly understand what needs to be solved and why
+
+---
+
+## 🔎 Step 2 — Explore Existing Code (MANDATORY)
+
+Search in:
+
+- `lib/components/`
+- `lib/screens/`
+- `lib/models/`
+- `lib/utils/`
+- `functions/`
+
+Check for:
+
+- Existing widgets
+- Reusable logic
+- Similar implementations
+
+### Decision Rule:
+
+- If exists → **Modify / Extend**
+- If not → **Then create new**
+
+---
+
+## 🧩 Step 3 — Identify Impact Area
+
+Determine:
+
+- Where the change belongs
+- Which files/modules are affected
+- Data flow (UI → logic → backend)
+
+Avoid touching unrelated parts of the codebase.
+
+---
+
+## 🎯 Step 4 — Define Minimal Change (MVP Thinking)
+
+Only implement what is required.
+
+### ✅ Do:
+- Small, focused updates
+- Incremental improvements
+
+### ❌ Avoid:
+- Large refactors without need
+- Overengineering
+- Adding unused abstractions
+
+---
+
+## 🛠 Step 5 — Implementation Guidelines
+
+Follow project conventions:
+
+- 2-space indentation
+- Use `dart format`
+- File naming: `lowercase_with_underscores`
+- Keep widgets small and reusable
+
+For backend (`functions/`):
+
+- Keep logic modular
+- Do not mix frontend concerns
+
+---
+
+## 🧪 Step 6 — Validate Changes
+
+Before finishing:
+
+### Flutter:
+- `flutter analyze`
+- `flutter test`
+
+### Firebase Functions:
+- `cd functions && npm run serve`
+
+Ensure:
+
+- No lint issues
+- No broken functionality
+- No duplicate logic
+
+---
+
+## ✨ Step 7 — Final Quality Check
+
+Confirm:
+
+- No new unnecessary files created
+- Existing structure is respected
+- Code is clean and readable
+- Change is minimal but complete
+
+---
+
+## 🎯 Goal
+
+Ship a **small, working, maintainable change** — not a perfect or overbuilt solution.
+
+---
+
+## 🧠 Execution Mindset
+
+Always follow:
+
+Understand → Explore → Identify → Modify → Validate
+
+---
+
+## ⚠️ Common Mistakes to Avoid
+
+- Creating duplicate widgets instead of reusing
+- Ignoring existing utilities/helpers
+- Overcomplicating simple features
+- Modifying unrelated files
+- Skipping validation steps
+
+---
+
+## 🚀 Summary
+
+- Reuse first, create later  
+- Keep it simple  
+- Ship fast, but correctly  
+- Respect the codebase  

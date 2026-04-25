@@ -2,9 +2,11 @@ const functions = require("firebase-functions");
 const { getAuth } = require("firebase-admin/auth");
 const axios = require("axios");
 const logger = require("firebase-functions/logger");
+const { defineString } = require("firebase-functions/params");
 const { createOrder } = require("./payments/createOrder");
 const { paymentSuccessWebhook } = require("./payments/success");
 const { verifyPayment } = require("./payments/verifyPayment");
+const { getUnlockedContent } = require("./payments/getUnlockedContent");
 const { admin } = require("./config/firebase");
 const { setGlobalOptions } = require("firebase-functions/v2");
 
@@ -20,18 +22,32 @@ setGlobalOptions({
 exports.createOrder = createOrder;
 exports.paymentSuccessWebhook = paymentSuccessWebhook;
 exports.verifyPayment = verifyPayment;
+exports.getUnlockedContent = getUnlockedContent;
 
-// Cashfree credentials
-const clientId = "CF10622351D0PD6TVEJ5OS739PLQLG";
-const clientSecret = "cfsk_ma_test_f591e873df5b0e07c0e052494848479c_96a8b0b7";
-const authURL = "https://payout-gamma.cashfree.com/payout/v1";
-const baseURL = "https://sandbox.cashfree.com/payout";
+const payoutClientId = defineString("CF_PAYOUT_CLIENT_ID", { default: "" });
+const payoutClientSecret = defineString("CF_PAYOUT_CLIENT_SECRET", { default: "" });
+const payoutAuthURL = defineString("CF_PAYOUT_AUTH_URL", {
+  default: "https://payout-gamma.cashfree.com/payout/v1",
+});
+const payoutBaseURL = defineString("CF_PAYOUT_BASE_URL", {
+  default: "https://sandbox.cashfree.com/payout",
+});
 
 const auth = getAuth();
 
 // Get Auth Token
 async function getAuthToken() {
-  const response = await axios.post(`${authURL}/authorize`, {}, {
+  const clientId = payoutClientId.value();
+  const clientSecret = payoutClientSecret.value();
+
+  if (!clientId || !clientSecret) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Cashfree payout credentials are not configured",
+    );
+  }
+
+  const response = await axios.post(`${payoutAuthURL.value()}/authorize`, {}, {
     headers: {
       'x-client-id': clientId,
       'x-client-secret': clientSecret,
@@ -51,7 +67,7 @@ async function getAuthToken() {
 // Verify Token
 async function verifyToken(token) {
   try {
-    const response = await axios.post(`${authURL}/verifyToken`, {}, {
+    const response = await axios.post(`${payoutAuthURL.value()}/verifyToken`, {}, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -92,7 +108,9 @@ exports.addBeneficiary = functions.https.onRequest(async (req, res) => {
     const token = await getAuthToken();
     await verifyToken(token);
 
-    const response = await axios.post(`${baseURL}/beneficiary`, req.body, {
+    const clientId = payoutClientId.value();
+    const clientSecret = payoutClientSecret.value();
+    const response = await axios.post(`${payoutBaseURL.value()}/beneficiary`, req.body, {
       headers: { 
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -119,7 +137,7 @@ exports.requestTransfer = functions.https.onCall(async (data, context) => {
     const token = await getAuthToken();
     await verifyToken(token);
 
-    const response = await axios.post(`${payoutTestURL}/requestTransfer`, data, {
+    const response = await axios.post(`${payoutBaseURL.value()}/requestTransfer`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

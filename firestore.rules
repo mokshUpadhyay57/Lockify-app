@@ -50,6 +50,46 @@ service cloud.firestore {
       return data.get('buyerId', '') == '' && data.get('buyerPhone', '') != '';
     }
 
+    function isCreatorId(userId) {
+      return isAuthenticated() && userId == request.auth.uid;
+    }
+
+    function isLockedMessageCreator(messageId) {
+      return isAuthenticated()
+        && get(/databases/$(database)/documents/lockedMessages/$(messageId)).data.get('createdBy', '') == request.auth.uid;
+    }
+
+    function isLockedMessageCreatorAfter(messageId) {
+      return isAuthenticated()
+        && getAfter(/databases/$(database)/documents/lockedMessages/$(messageId)).data.get('createdBy', '') == request.auth.uid;
+    }
+
+    function hasUidPurchase(messageId) {
+      return isAuthenticated()
+        && exists(/databases/$(database)/documents/purchases/$(request.auth.uid + '_' + messageId));
+    }
+
+    function hasOnlyPublicLockedMessageFields(data) {
+      return data.keys().hasOnly([
+        'teaserText',
+        'unlockPrice',
+        'expireMessage',
+        'expiryTime',
+        'createdAt',
+        'createdBy',
+        'updatedAt',
+        'isPublic',
+        'uniqueCode',
+        'purchasedCount',
+        'creatorName',
+        'creatorUsername',
+        'creatorPhotoUrl',
+        'previewImageUrl',
+        'previewVideoUrl',
+        'previewDocumentUrl'
+      ]);
+    }
+
     // Check if user is a participant in a room
     function isParticipant(data) {
       let uid = request.auth.uid;
@@ -118,9 +158,34 @@ service cloud.firestore {
     }
 
     match /lockedMessages/{messageId} {
-      allow read: if true; 
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (resource == null || resource.data.get('createdBy', '') == request.auth.uid);
+      allow read: if hasOnlyPublicLockedMessageFields(resource.data)
+        || isCreatorId(resource.data.get('createdBy', ''))
+        || hasUidPurchase(messageId);
+      allow create: if isAuthenticated()
+        && request.resource.data.get('createdBy', '') == request.auth.uid
+        && hasOnlyPublicLockedMessageFields(request.resource.data);
+      allow update: if isAuthenticated()
+        && resource.data.get('createdBy', '') == request.auth.uid
+        && request.resource.data.get('createdBy', '') == request.auth.uid
+        && hasOnlyPublicLockedMessageFields(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.get('createdBy', '') == request.auth.uid;
+    }
+
+    match /lockedMessageContent/{messageId} {
+      allow get: if isLockedMessageCreator(messageId) || hasUidPurchase(messageId);
+      allow list: if false;
+      allow create, update: if isLockedMessageCreatorAfter(messageId);
+      allow delete: if isLockedMessageCreator(messageId);
+    }
+
+    match /order-items/{orderItemId} {
+      allow get: if (
+        isAuthenticated() && isPurchaseOwner(resource.data)
+      ) || (
+        !isAuthenticated() && isAnonymousLegacyPurchase(resource.data)
+      );
+      allow list: if false;
+      allow create, update, delete: if false;
     }
 
     match /polls/{pollId} {
