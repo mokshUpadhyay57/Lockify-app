@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
 
 class PurchaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -9,15 +10,18 @@ class PurchaseService {
   factory PurchaseService() => _instance;
   PurchaseService._internal();
 
+  final Logger logger = Logger();
+
   /// Get a stream of purchases for the current logged-in user
   Stream<List<QueryDocumentSnapshot>> streamMyPurchases() {
     final currentUser = _auth.currentUser;
+    logger.i("Fetching purchases for user: ${currentUser?.uid}");
     if (currentUser == null) {
       return const Stream.empty();
     }
 
     return _firestore
-        .collection('purchases')
+        .collection('order-items')
         .where('buyerId', isEqualTo: currentUser.uid)
         .orderBy('purchasedAt', descending: true)
         .limit(20) // Optimization: Limit to latest 20 purchases

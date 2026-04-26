@@ -53,6 +53,7 @@ class _PurchasePageState extends State<PurchasePage> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

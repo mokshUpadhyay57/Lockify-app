@@ -13,12 +13,8 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Extract last 10 digits safely
-    function getNormalizedPhone(phone) {
-      return string(phone).size() >= 10 
-        ? string(phone)[(string(phone).size() - 10) : string(phone).size()] 
-        : string(phone);
-    }
+    // NOTE: removed normalization helper due to limitations in rules language.
+    // Legacy phone comparisons will use raw phone strings from tokens/profile.
 
     // Fetch the current user's phone from their profile document
     function getUserPhone() {
@@ -28,21 +24,16 @@ service cloud.firestore {
     // Purchases owned by UID (new model) or normalized phone (legacy docs)
     function isPurchaseOwner(data) {
       let buyerId = data.get('buyerId', '');
-      if (buyerId != '') {
-        return buyerId == request.auth.uid;
-      }
-
-      let buyerPhone = getNormalizedPhone(data.get('buyerPhone', ''));
+      let buyerPhone = data.get('buyerPhone', '');
       let tokenPhone = request.auth.token.get('phone_number', null);
       let profilePhone = getUserPhone();
 
-      let normalizedTokenPhone = tokenPhone != null ? getNormalizedPhone(tokenPhone) : '';
-      let normalizedProfilePhone = profilePhone != '' ? getNormalizedPhone(profilePhone) : '';
-
-      return buyerPhone != '' && (
-        buyerPhone == normalizedTokenPhone ||
-        buyerPhone == normalizedProfilePhone
-      );
+      return buyerId != ''
+        ? buyerId == request.auth.uid
+        : (buyerPhone != '' && (
+            (tokenPhone != null && buyerPhone == tokenPhone) ||
+            (profilePhone != '' && buyerPhone == profilePhone)
+          ));
     }
 
     // Anonymous fallback for old phone-keyed purchases.
@@ -95,17 +86,14 @@ service cloud.firestore {
       let uid = request.auth.uid;
       let tokenPhone = request.auth.token.get('phone_number', null);
       let profilePhone = getUserPhone();
-      
-      let normalizedTokenPhone = tokenPhone != null ? getNormalizedPhone(tokenPhone) : "NO_TOKEN_PHONE";
-      let normalizedProfilePhone = profilePhone != "" ? getNormalizedPhone(profilePhone) : "NO_PROFILE_PHONE";
-      
+
       let uids = data.get('participantUids', []);
       let phones = data.get('participantPhones', []);
-      
+
       return isAuthenticated() && (
         (uid in uids) || 
-        (normalizedTokenPhone in phones) || 
-        (normalizedProfilePhone in phones)
+        (tokenPhone != null && tokenPhone in phones) || 
+        (profilePhone != '' && profilePhone in phones)
       );
     }
 
@@ -179,13 +167,12 @@ service cloud.firestore {
     }
 
     match /order-items/{orderItemId} {
-      allow get: if (
-        isAuthenticated() && isPurchaseOwner(resource.data)
-      ) || (
-        !isAuthenticated() && isAnonymousLegacyPurchase(resource.data)
-      );
-      allow list: if false;
-      allow create, update, delete: if false;
+      allow read: if request.auth != null
+              && resource.data.buyerId == request.auth.uid;
+
+        allow get: if (
+          isAuthenticated() && isPurchaseOwner(resource.data)
+        );
     }
 
     match /polls/{pollId} {
@@ -199,8 +186,12 @@ service cloud.firestore {
       ) || (
         !isAuthenticated() && isAnonymousLegacyPurchase(resource.data)
       );
-      // Queries should continue to use where('buyerId', '==', request.auth.uid) for indexed reads.
-      allow list: if isAuthenticated() && resource.data.get('buyerId', '') == request.auth.uid;
+      // Queries must filter by buyerId == request.auth.uid for indexed reads.
+      allow list: if isAuthenticated()
+        && request.query.where.size() > 0
+        && request.query.where[0].field == 'buyerId'
+        && request.query.where[0].op == '=='
+        && request.query.where[0].value == request.auth.uid;
       // Purchases are finalized by backend functions (admin SDK), not client writes.
       allow create, update, delete: if false;
     }

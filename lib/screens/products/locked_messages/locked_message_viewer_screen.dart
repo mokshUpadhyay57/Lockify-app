@@ -2,8 +2,10 @@ import 'package:lockify/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:lockify/utils/snackbar.dart';
+import 'package:dio/dio.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:logger/logger.dart';
 
 class LockedMessageViewerScreen extends StatefulWidget {
   final String documentId;
@@ -17,24 +19,32 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
   // Memoize owner profile fetching
   Future<DocumentSnapshot<Map<String, dynamic>>>? _ownerFuture;
   String? _lastCreatedBy;
+  final Logger logger = Logger();
 
   Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserByUID(String uid) async {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .where('uid', isEqualTo: uid)
-        .get();
+    final querySnapshot = await FirebaseFirestore.instance.collection('users').where('uid', isEqualTo: uid).get();
     if (querySnapshot.docs.isEmpty) throw Exception('User not found');
     return querySnapshot.docs.first;
   }
 
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        AppSnackBar.error(context, 'Could not launch file.');
+ Future<void> openFileFromUrl(String url) async {
+    try {
+      final dir = await getTemporaryDirectory();
+
+      final fileName = url.split('/').last.split('?').first;
+      final filePath = '${dir.path}/$fileName';
+
+      // Download file
+      await Dio().download(url, filePath);
+
+      // Open with native app (media player / pdf viewer)
+      final result = await OpenFilex.open(filePath);
+
+      if (result.type != ResultType.done) {
+        logger.e("Open failed: ${result.message}");
       }
+    } catch (e) {
+      logger.e("Error: $e");
     }
   }
 
@@ -52,9 +62,13 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance.collection('lockedMessages').doc(widget.documentId).snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-          if (!snapshot.hasData || !snapshot.data!.exists) return const Center(child: Text('Message no longer exists.'));
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text('Message no longer exists.'));
+          }
 
           var data = snapshot.data!.data()!;
           final createdBy = data['createdBy'] ?? '';
@@ -96,13 +110,19 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                             // Creator Info
                             Row(
                               children: [
-                                const CircleAvatar(backgroundColor: AppColors.primaryPurple, child: Icon(Icons.person, color: AppColors.white)),
+                                const CircleAvatar(
+                                  backgroundColor: AppColors.primaryPurple,
+                                  child: Icon(Icons.person, color: AppColors.white),
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(ownerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                      Text(
+                                        ownerName,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      ),
                                       Text("@$username", style: const TextStyle(color: AppColors.grey, fontSize: 12)),
                                     ],
                                   ),
@@ -111,13 +131,20 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                               ],
                             ),
                             const Divider(height: 24),
-                            
+
                             // Teaser
-                            const Text("TEASER", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryPurple, fontSize: 12)),
+                            const Text(
+                              "TEASER",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryPurple,
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(data['teaserText'] ?? 'No teaser', style: const TextStyle(fontSize: 16)),
                             const SizedBox(height: 16),
-                            
+
                             // Unlocked Content Section
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -133,55 +160,84 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                                     children: const [
                                       Icon(Icons.lock_open, color: AppColors.onlineGreen, size: 20),
                                       SizedBox(width: 8),
-                                      Text("UNLOCKED MESSAGE", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.onlineGreen, fontSize: 14)),
+                                      Text(
+                                        "UNLOCKED MESSAGE",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.onlineGreen,
+                                          fontSize: 14,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
-                                  Text(data['lockedContent'] ?? 'No content', style: const TextStyle(fontSize: 16, height: 1.4)),
-                                  
+                                  Text(
+                                    data['lockedContent'] ?? 'No content',
+                                    style: const TextStyle(fontSize: 16, height: 1.4),
+                                  ),
+
                                   const SizedBox(height: 16),
-                                  
+
                                   // Image
                                   if (data['imageUrl'] != null)
                                     Padding(
                                       padding: const EdgeInsets.only(bottom: 12),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(data['imageUrl'], width: double.infinity, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                    
-                                  // Video
-                                  if (data['videoUrl'] != null)
-                                    InkWell(
-                                      onTap: () => _launchUrl(data['videoUrl']),
-                                      child: Container(
-                                        margin: const EdgeInsets.only(bottom: 12),
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(color: AppColors.purple50, borderRadius: BorderRadius.circular(8)),
-                                        child: Row(
-                                          children: const [
-                                            Icon(Icons.play_circle_fill, color: AppColors.primaryPurple, size: 30), 
-                                            SizedBox(width: 10), 
-                                            Text("Play Video", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryPurple))
-                                          ]
+                                        child: Image.network(
+                                          data['imageUrl'],
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
                                     ),
-                                    
+
+                                  // Video
+                                  if (data['videoUrl'] != null)
+                                    InkWell(
+                                      onTap: () => openFileFromUrl(data['videoUrl']),
+                                      child: Container(
+                                        margin: const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.purple50,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          children: const [
+                                            Icon(Icons.play_circle_fill, color: AppColors.primaryPurple, size: 30),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              "Play Video",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryPurple,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
                                   // Document
                                   if (data['documentUrl'] != null)
                                     InkWell(
-                                      onTap: () => _launchUrl(data['documentUrl']),
+                                      onTap: () => openFileFromUrl(data['documentUrl']),
                                       child: Container(
                                         padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
                                         child: Row(
                                           children: const [
-                                            Icon(Icons.insert_drive_file, color: Colors.blue, size: 30), 
-                                            SizedBox(width: 10), 
-                                            Text("Download Document", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue))
-                                          ]
+                                            Icon(Icons.insert_drive_file, color: Colors.blue, size: 30),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              "Download Document",
+                                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -202,4 +258,3 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
     );
   }
 }
-
