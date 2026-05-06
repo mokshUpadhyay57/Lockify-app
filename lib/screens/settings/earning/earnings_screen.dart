@@ -235,8 +235,8 @@ class EarningsScreen extends StatelessWidget {
   }
 
   Widget _transactionTile(Map<String, dynamic> data) {
-    final amount =
-        data['amount'] is num ? (data['amount'] as num).toDouble() : 0;
+    final double amount =
+        data['amount'] is num ? (data['amount'] as num).toDouble() : 0.0;
     final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
     final date =
         createdAt == null

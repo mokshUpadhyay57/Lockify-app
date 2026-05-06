@@ -243,7 +243,7 @@ class EarningHomeScreen extends StatefulWidget {
 }
 
 class _EarningHomeScreenState extends State<EarningHomeScreen> {
-  late Future<String> _isVerifiedFuture;
+  late Future<bool> _isVerifiedFuture;
 
   double _readAmount(Map<String, dynamic>? data, String key) {
     final value = data?[key];
@@ -258,15 +258,20 @@ class _EarningHomeScreenState extends State<EarningHomeScreen> {
     return value.toStringAsFixed(2);
   }
 
-  Future<String> fetchUserVerifiedStatus() async {
+  Future<bool> fetchUserVerifiedStatus() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return "false";
+    if (user == null) return false;
     final doc =
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .get();
-    return doc.data()?['isVerified'] ?? "Not Verified";
+    final isVerified = doc.data()?['isVerified'];
+    if (isVerified is bool) return isVerified;
+    if (isVerified is String) {
+      return isVerified.toLowerCase() == "verified" || isVerified == "true";
+    }
+    return false;
   }
 
   void _refreshStatus() {
@@ -294,13 +299,25 @@ class _EarningHomeScreenState extends State<EarningHomeScreen> {
           tooltip: "Refresh status",
         ),
       ],
-      body: FutureBuilder<String>(
+      body: FutureBuilder<bool>(
         future: _isVerifiedFuture,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final isVerified = snapshot.data?.toLowerCase() == "verified";
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  "Unable to load earning status right now.",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.errorRed),
+                ),
+              ),
+            );
+          }
+          final isVerified = snapshot.data ?? false;
           return SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -685,7 +702,7 @@ class _EarningHomeScreenState extends State<EarningHomeScreen> {
                   icon: Icons.history,
                   iconBg: AppColors.purple50,
                   iconColor: AppColors.primaryPurple,
-                  title: "Withdrawal History",
+                  title: "Withdrawal Requests",
                   onTap: () {
                     Navigator.push(
                       context,
