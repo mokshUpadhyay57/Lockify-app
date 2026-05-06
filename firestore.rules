@@ -107,6 +107,13 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow write: if isAuthenticated(); 
       }
+
+      match /withdrawals/{withdrawalId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.get('uid', '') == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     match /chat_rooms/{roomId} {
@@ -186,14 +193,28 @@ service cloud.firestore {
       ) || (
         !isAuthenticated() && isAnonymousLegacyPurchase(resource.data)
       );
-      // Queries must filter by buyerId == request.auth.uid for indexed reads.
-      allow list: if isAuthenticated()
-        && request.query.where.size() > 0
-        && request.query.where[0].field == 'buyerId'
-        && request.query.where[0].op == '=='
-        && request.query.where[0].value == request.auth.uid;
+      allow list: if isAuthenticated() && isPurchaseOwner(resource.data);
       // Purchases are finalized by backend functions (admin SDK), not client writes.
       allow create, update, delete: if false;
+    }
+
+    match /wallets/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update, delete: if false;
+    }
+
+    match /wallet_transactions/{transactionId} {
+      allow read: if isAuthenticated()
+        && resource.data.get('userId', '') == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /withdrawals/{withdrawalId} {
+      allow read: if isAuthenticated()
+        && resource.data.get('uid', '') == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.get('uid', '') == request.auth.uid;
+      allow update, delete: if false;
     }
 
     match /{document=**} {
