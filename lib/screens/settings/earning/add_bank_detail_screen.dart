@@ -52,9 +52,9 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
   }
 
   String _generateBeneficiaryId() {
-    return controllers['name']!.text +
-        controllers['ifsc']!.text +
-        DateTime.now().millisecondsSinceEpoch.toString();
+    final uid = FirebaseAuth.instance.currentUser!.uid.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return "ben_${uid.substring(0, 8)}_$timestamp";
   }
 
   Future<void> _submitForm() async {
@@ -72,30 +72,35 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
 
       try {
         final response = await http.post(
-          Uri.parse("https://addbeneficiary-eof7ol2ifa-uc.a.run.app/addBeneficiary"),
-          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $idToken'},
+          // Old Firebase function URL:
+          // Uri.parse("https://addbeneficiary-eof7ol2ifa-uc.a.run.app/addBeneficiary"),
+          Uri.parse(
+            "https://lockifybackend.netlify.app/.netlify/functions/addbeneficiary",
+          ),
+          headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             "beneficiary_id": beneficiaryId,
-            "beneficiary_name": controllers['name']!.text,
+            "beneficiary_name": controllers['name']!.text.trim(),
             "beneficiary_instrument_details": {
               "bank_account_number": controllers['bankAccount']!.text,
               "bank_ifsc": controllers['ifsc']!.text,
-              "vpa": controllers['vpa']!.text.isNotEmpty ? controllers['vpa']!.text : null,
+              // "vpa": controllers['vpa']!.text.isNotEmpty ? controllers['vpa']!.text : null,
             },
-            "beneficiary_contact_details": {
-              "beneficiary_email": controllers['email']!.text,
-              "beneficiary_phone": splitPhone['phone'],
-              "beneficiary_country_code": splitPhone['countryCode'],
-              "beneficiary_address": controllers['address']!.text,
-              "beneficiary_city": controllers['city']!.text,
-              "beneficiary_state": controllers['state']!.text,
-              "beneficiary_postal_code": controllers['postalCode']!.text,
-              "beneficiary_purpose": "Withdrawal",
-            },
+            // "beneficiary_contact_details": {
+            //   "beneficiary_email": controllers['email']!.text,
+            //   "beneficiary_phone": splitPhone['phone'],
+            //   "beneficiary_country_code": splitPhone['countryCode'],
+            //   "beneficiary_address": controllers['address']!.text,
+            //   "beneficiary_city": controllers['city']!.text,
+            //   "beneficiary_state": controllers['state']!.text,
+            //   "beneficiary_postal_code": controllers['postalCode']!.text,
+            //   // "beneficiary_purpose": "Withdrawal",
+            // },
           }),
         );
 
-        logger.i('API response: ${response.body}');
+        logger.i('Status: ${response.statusCode}');
+        logger.i('Body: ${response.body}');
 
         if (response.statusCode == 200) {
           AppSnackBar.success(context, "Beneficiary added successfully!");
