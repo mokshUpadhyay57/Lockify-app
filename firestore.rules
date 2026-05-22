@@ -97,15 +97,38 @@ service cloud.firestore {
       );
     }
 
+    function canAccessRoomByType(roomId, roomType) {
+      return isAuthenticated() && (
+        (roomType == 'group'
+          && isParticipant(get(/databases/$(database)/documents/groups/$(roomId)).data)) ||
+        (roomType == 'channel'
+          && isParticipant(get(/databases/$(database)/documents/channels/$(roomId)).data))
+      );
+    }
+
+    function canWriteMembershipIndex(userId, roomId) {
+      return isOwner(userId) || (
+        request.resource.data.get('roomId', '') == roomId
+        && canAccessRoomByType(roomId, request.resource.data.get('type', ''))
+      );
+    }
+
+    function canDeleteMembershipIndex(userId, roomId) {
+      return isOwner(userId) || canAccessRoomByType(roomId, resource.data.get('type', ''));
+    }
+
     // --- Collection Rules ---
 
     match /users/{userId} {
+      // Current client flows use users for phone lookup and member metadata.
+      // Move public profile lookup to a separate collection before restricting this further.
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
 
       match /memberships/{roomId} {
         allow read: if isOwner(userId);
-        allow write: if isAuthenticated(); 
+        allow create, update: if canWriteMembershipIndex(userId, roomId);
+        allow delete: if canDeleteMembershipIndex(userId, roomId);
       }
 
       match /withdrawals/{withdrawalId} {
@@ -122,7 +145,12 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isParticipant(resource.data);
       
       match /messages/{messageId} {
-        allow read, write: if isAuthenticated(); 
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/chat_rooms/$(roomId)).data); 
+      }
+      
+      // FIX: Future-proofing Polls subcollection
+      match /polls/{pollId} {
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/chat_rooms/$(roomId)).data);
       }
     }
 
@@ -132,10 +160,15 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isParticipant(resource.data);
 
       match /messages/{messageId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/groups/$(groupId)).data);
       }
       match /members/{memberId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/groups/$(groupId)).data);
+      }
+      
+      // FIX: Future-proofing Polls subcollection
+      match /polls/{pollId} {
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/groups/$(groupId)).data);
       }
     }
 
@@ -145,10 +178,15 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isParticipant(resource.data);
 
       match /messages/{messageId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/channels/$(channelId)).data);
       }
       match /members/{memberId} {
-        allow read, write: if isAuthenticated();
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/channels/$(channelId)).data);
+      }
+
+      // FIX: Future-proofing Polls subcollection
+      match /polls/{pollId} {
+        allow read, write: if isAuthenticated() && isParticipant(get(/databases/$(database)/documents/channels/$(channelId)).data);
       }
     }
 
