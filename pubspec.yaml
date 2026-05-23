@@ -67,6 +67,7 @@ dependencies:
   dio: ^5.9.2
   open_filex: ^4.7.0
   external_path: ^2.2.0
+  fl_chart: 0.69.0
 
 dev_dependencies:
   flutter_test:

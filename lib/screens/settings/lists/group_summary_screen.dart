@@ -9,7 +9,7 @@ class GroupSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Group on lockify', style: TextStyle(fontSize: 18)),
+        title: const Text('Groups', style: TextStyle(fontSize: 18)),
         foregroundColor: AppColors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -21,7 +21,7 @@ class GroupSummaryScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: Center(
-        child: Text('Group Summary Screen'),
+        child: Text('Groups Summary Screen'),
       ),
     );
   }

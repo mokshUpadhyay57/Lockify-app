@@ -213,7 +213,10 @@ service cloud.firestore {
 
     match /order-items/{orderItemId} {
       allow read: if request.auth != null
-              && resource.data.buyerId == request.auth.uid;
+              && (
+                resource.data.buyerId == request.auth.uid
+                || resource.data.creatorId == request.auth.uid
+              );
 
         allow get: if (
           isAuthenticated() && isPurchaseOwner(resource.data)

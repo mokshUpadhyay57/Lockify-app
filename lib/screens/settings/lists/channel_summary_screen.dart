@@ -9,7 +9,7 @@ class ChannelSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Channels on Lockify', style: TextStyle(fontSize: 18)),
+        title: const Text('Channels', style: TextStyle(fontSize: 18)),
         foregroundColor: AppColors.white,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),

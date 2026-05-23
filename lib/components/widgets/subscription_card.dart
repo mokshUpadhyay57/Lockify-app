@@ -1,19 +1,20 @@
-import 'package:lockify/utils/colors.dart';
 import 'package:flutter/material.dart';
-
+import 'package:lockify/utils/colors.dart';
 
 class SubscriptionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String value;
   final Color valueColor;
+  final Widget? chart;
 
-const SubscriptionCard({
+  const SubscriptionCard({
     super.key,
     required this.title,
     required this.subtitle,
     required this.value,
     this.valueColor = AppColors.errorRed,
+    this.chart,
   });
 
   @override
@@ -30,6 +31,7 @@ const SubscriptionCard({
             Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   value,
@@ -40,26 +42,18 @@ const SubscriptionCard({
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: AppColors.grey),
+                Expanded(
+                  child: Text(
+                    subtitle,
+                    style: const TextStyle(color: AppColors.grey),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Container(
-              height: 100,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.blueGrey,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                "Chart Placeholder",
-                style: TextStyle(color: AppColors.white, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
+            if (chart != null) ...[
+              const SizedBox(height: 20),
+              chart!,
+            ],
           ],
         ),
       ),

@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:lockify/screens/settings/lists/channel_screen.dart';
 import 'package:lockify/screens/settings/lists/group_screen.dart';
 import 'package:logger/logger.dart';
-import 'package:lockify/screens/settings/lists/lock_messgages.dart';
+import 'package:lockify/screens/settings/lists/locked_messages.dart';
 
 // Initialize the logger
 final Logger logger = Logger();
@@ -30,7 +30,7 @@ class ListOption {
 final List<ListOption> listOptions = [
   ListOption(
     title: 'Locked Messages',
-    subtitle: 'View all your locked messages',
+    subtitle: 'Manage your locked messages',
     materialIcon: Icons.lock,
     cupertinoIcon: CupertinoIcons.lock,
     onTap: (BuildContext context) {
@@ -38,21 +38,21 @@ final List<ListOption> listOptions = [
     },
   ),
   ListOption(
-    title: 'Channel on Lockify',
-    subtitle: 'View all your channels',
+    title: 'Channels',
+    subtitle: 'Manage your channels',
     materialIcon: Icons.campaign,
-    cupertinoIcon: CupertinoIcons.add,
+    cupertinoIcon: CupertinoIcons.chat_bubble_2,
     onTap: (BuildContext context) {
-      _navigateTo(context, const ChannelScreen(), 'Channel Summary on Lockify');
+      _navigateTo(context, const ChannelScreen(), 'Channels');
     },
   ),
   ListOption(
-    title: 'Group on Lockify',
-    subtitle: 'View all your Groups',
+    title: 'Groups',
+    subtitle: 'Manage your groups',
     materialIcon: Icons.group,
     cupertinoIcon: CupertinoIcons.group_solid,
     onTap: (BuildContext context) {
-      _navigateTo(context, const GroupScreen(), 'Group Summary on Lockify');
+      _navigateTo(context, const GroupScreen(), 'Groups');
     },
   ),
 ];

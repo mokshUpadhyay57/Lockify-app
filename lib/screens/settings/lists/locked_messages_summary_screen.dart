@@ -94,7 +94,7 @@ class _LockedMessagesSummaryScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Locked Messages Summary', style: TextStyle(fontSize: 18),),
+        title: const Text('Locked Messages', style: TextStyle(fontSize: 18)),
         backgroundColor: Colors.deepPurple,
         foregroundColor: AppColors.white,
         leading: const BackButton(

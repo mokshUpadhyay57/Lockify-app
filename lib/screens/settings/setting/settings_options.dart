@@ -10,6 +10,7 @@ import 'package:lockify/screens/settings/setting/profile_update_screen.dart';
 import 'package:lockify/screens/settings/setting/signout.dart';
 // import 'package:lockify/screens/settings/setting/upload_invoice.dart';
 import 'package:lockify/screens/settings/setting/whatsapp_help_screen.dart';
+import 'package:lockify/screens/settings/lists/locked_messages.dart';
 
 // Initialize the logger
 final Logger logger = Logger();
@@ -53,7 +54,11 @@ final List<SettingsOption> settingsOptions = [
     materialIcon: Icons.lock,
     cupertinoIcon: CupertinoIcons.lock,
     onTap: (BuildContext context) {
-      logger.i('Lock Direct Message');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LockedMessagesPage()),
+      );
+      logger.i('Navigate to Lock Direct Message');
     },
   ),
   SettingsOption(
