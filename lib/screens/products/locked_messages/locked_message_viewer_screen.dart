@@ -5,29 +5,35 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:logger/logger.dart';
+import 'package:lockify/utils/app_logger.dart';
 
 class LockedMessageViewerScreen extends StatefulWidget {
   final String documentId;
   const LockedMessageViewerScreen({super.key, required this.documentId});
 
   @override
-  State<LockedMessageViewerScreen> createState() => _LockedMessageViewerScreenState();
+  State<LockedMessageViewerScreen> createState() =>
+      _LockedMessageViewerScreenState();
 }
 
 class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
   // Memoize owner profile fetching
   Future<DocumentSnapshot<Map<String, dynamic>>>? _ownerFuture;
   String? _lastCreatedBy;
-  final Logger logger = Logger();
 
-  Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserByUID(String uid) async {
-    final querySnapshot = await FirebaseFirestore.instance.collection('users').where('uid', isEqualTo: uid).get();
+  Future<DocumentSnapshot<Map<String, dynamic>>> fetchUserByUID(
+    String uid,
+  ) async {
+    final querySnapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .where('uid', isEqualTo: uid)
+            .get();
     if (querySnapshot.docs.isEmpty) throw Exception('User not found');
     return querySnapshot.docs.first;
   }
 
- Future<void> openFileFromUrl(String url) async {
+  Future<void> openFileFromUrl(String url) async {
     try {
       final dir = await getTemporaryDirectory();
 
@@ -41,10 +47,10 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
       final result = await OpenFilex.open(filePath);
 
       if (result.type != ResultType.done) {
-        logger.e("Open failed: ${result.message}");
+        AppLogger.error("Open failed: ${result.message}");
       }
     } catch (e) {
-      logger.e("Error: $e");
+      AppLogger.error("Error opening file", error: e);
     }
   }
 
@@ -55,17 +61,28 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryPurple,
         foregroundColor: AppColors.white,
-        title: const Text('Unlocked Content', style: TextStyle(fontSize: 18, letterSpacing: 1.5)),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        title: const Text(
+          'Unlocked Content',
+          style: TextStyle(fontSize: 18, letterSpacing: 1.5),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         leadingWidth: 35,
       ),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance.collection('lockedMessages').doc(widget.documentId).snapshots(),
+        stream:
+            FirebaseFirestore.instance
+                .collection('lockedMessages')
+                .doc(widget.documentId)
+                .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+          if (snapshot.hasError)
+            return Center(child: Text('Error: ${snapshot.error}'));
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return const Center(child: Text('Message no longer exists.'));
           }
@@ -73,7 +90,10 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
           var data = snapshot.data!.data()!;
           final createdBy = data['createdBy'] ?? '';
           final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
-          final formattedDate = createdAt != null ? DateFormat('MMM d, yyyy').format(createdAt) : 'Unknown Date';
+          final formattedDate =
+              createdAt != null
+                  ? DateFormat('MMM d, yyyy').format(createdAt)
+                  : 'Unknown Date';
 
           if (_ownerFuture == null || _lastCreatedBy != createdBy) {
             _lastCreatedBy = createdBy;
@@ -99,7 +119,9 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                   children: [
                     // Content Card
                     Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 4,
                       shadowColor: AppColors.primaryPurple.withOpacity(0.2),
                       child: Padding(
@@ -112,22 +134,41 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                               children: [
                                 const CircleAvatar(
                                   backgroundColor: AppColors.primaryPurple,
-                                  child: Icon(Icons.person, color: AppColors.white),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: AppColors.white,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         ownerName,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                      Text("@$username", style: const TextStyle(color: AppColors.grey, fontSize: 12)),
+                                      Text(
+                                        "@$username",
+                                        style: const TextStyle(
+                                          color: AppColors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Text(formattedDate, style: const TextStyle(color: AppColors.grey, fontSize: 12)),
+                                Text(
+                                  formattedDate,
+                                  style: const TextStyle(
+                                    color: AppColors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                             const Divider(height: 24),
@@ -142,7 +183,10 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(data['teaserText'] ?? 'No teaser', style: const TextStyle(fontSize: 16)),
+                            Text(
+                              data['teaserText'] ?? 'No teaser',
+                              style: const TextStyle(fontSize: 16),
+                            ),
                             const SizedBox(height: 16),
 
                             // Unlocked Content Section
@@ -151,14 +195,21 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                               decoration: BoxDecoration(
                                 color: AppColors.onlineGreen.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppColors.green200, width: 1.5),
+                                border: Border.all(
+                                  color: AppColors.green200,
+                                  width: 1.5,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: const [
-                                      Icon(Icons.lock_open, color: AppColors.onlineGreen, size: 20),
+                                      Icon(
+                                        Icons.lock_open,
+                                        color: AppColors.onlineGreen,
+                                        size: 20,
+                                      ),
                                       SizedBox(width: 8),
                                       Text(
                                         "UNLOCKED MESSAGE",
@@ -173,7 +224,10 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                                   const SizedBox(height: 12),
                                   Text(
                                     data['lockedContent'] ?? 'No content',
-                                    style: const TextStyle(fontSize: 16, height: 1.4),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      height: 1.4,
+                                    ),
                                   ),
 
                                   const SizedBox(height: 16),
@@ -181,7 +235,9 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                                   // Image
                                   if (data['imageUrl'] != null)
                                     Padding(
-                                      padding: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
@@ -195,17 +251,27 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                                   // Video
                                   if (data['videoUrl'] != null)
                                     InkWell(
-                                      onTap: () => openFileFromUrl(data['videoUrl']),
+                                      onTap:
+                                          () =>
+                                              openFileFromUrl(data['videoUrl']),
                                       child: Container(
-                                        margin: const EdgeInsets.only(bottom: 12),
+                                        margin: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: AppColors.purple50,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Row(
                                           children: const [
-                                            Icon(Icons.play_circle_fill, color: AppColors.primaryPurple, size: 30),
+                                            Icon(
+                                              Icons.play_circle_fill,
+                                              color: AppColors.primaryPurple,
+                                              size: 30,
+                                            ),
                                             SizedBox(width: 10),
                                             Text(
                                               "Play Video",
@@ -222,20 +288,32 @@ class _LockedMessageViewerScreenState extends State<LockedMessageViewerScreen> {
                                   // Document
                                   if (data['documentUrl'] != null)
                                     InkWell(
-                                      onTap: () => openFileFromUrl(data['documentUrl']),
+                                      onTap:
+                                          () => openFileFromUrl(
+                                            data['documentUrl'],
+                                          ),
                                       child: Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: Colors.blue.shade50,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Row(
                                           children: const [
-                                            Icon(Icons.insert_drive_file, color: Colors.blue, size: 30),
+                                            Icon(
+                                              Icons.insert_drive_file,
+                                              color: Colors.blue,
+                                              size: 30,
+                                            ),
                                             SizedBox(width: 10),
                                             Text(
                                               "Download Document",
-                                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blue,
+                                              ),
                                             ),
                                           ],
                                         ),

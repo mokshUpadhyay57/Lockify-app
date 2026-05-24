@@ -3,7 +3,7 @@ import 'package:lockify/utils/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lockify/screens/login/login_screen.dart';
-
+import 'package:lockify/utils/app_ui.dart';
 
 class SignOutCard extends StatelessWidget {
   const SignOutCard({super.key});
@@ -14,17 +14,16 @@ class SignOutCard extends StatelessWidget {
       await FirebaseAuth.instance.signOut();
 
       // Show success message
-      AppSnackBar.success(context, "Signed out successfully.");
+      AppSnackBar.success(null, "Signed out successfully.");
 
       // Clear the navigation stack and send to LoginScreen
-      Navigator.pushAndRemoveUntil(
-        context,
+      AppNavigation.pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => LoginScreen()),
         (route) => false,
       );
     } catch (e) {
       // Show error message if sign-out fails
-      AppSnackBar.error(context, "Error signing out: $e");
+      AppSnackBar.error(null, "Error signing out: $e");
     }
   }
 
@@ -74,10 +73,7 @@ class SignOutCard extends StatelessWidget {
           const Text(
             "Are you sure you want to log out of your account?",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              color: AppColors.black54,
-            ),
+            style: TextStyle(fontSize: 15, color: AppColors.black54),
           ),
           const SizedBox(height: 32),
 
@@ -86,7 +82,10 @@ class SignOutCard extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () => _handleSignOut(context),
-              icon: const Icon(Icons.check_circle_outline, color: AppColors.white),
+              icon: const Icon(
+                Icons.check_circle_outline,
+                color: AppColors.white,
+              ),
               label: const Text(
                 'YES, SIGN OUT',
                 style: TextStyle(color: AppColors.white, letterSpacing: 1.1),
@@ -121,4 +120,3 @@ class SignOutCard extends StatelessWidget {
     );
   }
 }
-

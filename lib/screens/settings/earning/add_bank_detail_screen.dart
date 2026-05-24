@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/logger.dart';
+import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/utils/snackbar.dart';
-
 
 class AddBankDetailsScreen extends StatefulWidget {
   const AddBankDetailsScreen({super.key});
@@ -16,7 +15,6 @@ class AddBankDetailsScreen extends StatefulWidget {
 
 class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
-  final logger = Logger();
 
   // Use a map for controllers, just like in profile_update_screen.dart
   final Map<String, TextEditingController> controllers = {
@@ -31,7 +29,6 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
     'state': TextEditingController(),
     'postalCode': TextEditingController(),
   };
-
 
   @override
   void dispose() {
@@ -52,7 +49,10 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
   }
 
   String _generateBeneficiaryId() {
-    final uid = FirebaseAuth.instance.currentUser!.uid.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    final uid = FirebaseAuth.instance.currentUser!.uid.replaceAll(
+      RegExp(r'[^a-zA-Z0-9]'),
+      '',
+    );
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return "ben_${uid.substring(0, 8)}_$timestamp";
   }
@@ -61,7 +61,7 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       AppSnackBar.error(context, "You must be signed in to add a beneficiary.");
-      logger.e('User not authenticated');
+      AppLogger.error('User not authenticated');
       return;
     }
 
@@ -99,17 +99,21 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
           }),
         );
 
-        logger.i('Status: ${response.statusCode}');
-        logger.i('Body: ${response.body}');
+        AppLogger.info('Status: ${response.statusCode}');
+        AppLogger.info('Body: ${response.body}');
 
         if (response.statusCode == 200) {
           AppSnackBar.success(context, "Beneficiary added successfully!");
         } else {
-          logger.e('Error from function: ${response.body}');
+          AppLogger.error('Error from function: ${response.body}');
           AppSnackBar.error(context, "Error: ${response.body}");
         }
       } catch (e, stack) {
-        logger.e('Exception during submission', error: e, stackTrace: stack);
+        AppLogger.error(
+          'Exception during submission',
+          error: e,
+          stackTrace: stack,
+        );
         AppSnackBar.error(context, "Error");
       }
     }
@@ -117,15 +121,35 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
 
   final List<Map<String, dynamic>> _fields = [
     {"label": "Name", "key": "name", "icon": Icons.person},
-    {"label": "Email", "key": "email", "icon": Icons.email, "keyboardType": TextInputType.emailAddress},
-    {"label": "Phone with Country Code", "key": "phone", "icon": Icons.phone, "keyboardType": TextInputType.phone},
-    {"label": "Bank Account", "key": "bankAccount", "icon": Icons.account_balance, "keyboardType": TextInputType.number},
+    {
+      "label": "Email",
+      "key": "email",
+      "icon": Icons.email,
+      "keyboardType": TextInputType.emailAddress,
+    },
+    {
+      "label": "Phone with Country Code",
+      "key": "phone",
+      "icon": Icons.phone,
+      "keyboardType": TextInputType.phone,
+    },
+    {
+      "label": "Bank Account",
+      "key": "bankAccount",
+      "icon": Icons.account_balance,
+      "keyboardType": TextInputType.number,
+    },
     {"label": "IFSC Code", "key": "ifsc", "icon": Icons.confirmation_number},
     {"label": "UPI Id", "key": "vpa", "icon": Icons.payment},
     {"label": "Address", "key": "address", "icon": Icons.home},
     {"label": "City", "key": "city", "icon": Icons.location_city},
     {"label": "State", "key": "state", "icon": Icons.map},
-    {"label": "Postal Code", "key": "postalCode", "icon": Icons.pin_drop, "keyboardType": TextInputType.number},
+    {
+      "label": "Postal Code",
+      "key": "postalCode",
+      "icon": Icons.pin_drop,
+      "keyboardType": TextInputType.number,
+    },
   ];
 
   Widget _buildTextField(
@@ -159,7 +183,8 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
             borderSide: BorderSide(color: primaryColor, width: 2),
           ),
         ),
-        validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+        validator:
+            (value) => value == null || value.isEmpty ? 'Required' : null,
       ),
     );
   }
@@ -175,7 +200,10 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
         foregroundColor: AppColors.white,
         elevation: 0,
         leadingWidth: 40,
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.of(context).pop()),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text("Add Bank Details"),
       ),
       body: SingleChildScrollView(
@@ -196,12 +224,20 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.info_outline, color: AppColors.primaryPurple, size: 24),
+                    const Icon(
+                      Icons.info_outline,
+                      color: AppColors.primaryPurple,
+                      size: 24,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         "Bank account details should match with the PAN details provided during KYC Process",
-                        style: TextStyle(color: AppColors.purple700, fontWeight: FontWeight.w600, fontSize: 15),
+                        style: TextStyle(
+                          color: AppColors.purple700,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ],
@@ -212,7 +248,9 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
               margin: const EdgeInsets.all(20),
               elevation: 3,
               shadowColor: AppColors.purple100,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Form(
@@ -220,13 +258,15 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ..._fields.map((f) => _buildTextField(
-                        f["label"],
-                        controllers[f["key"]]!,
-                        primaryColor,
-                        keyboardType: f["keyboardType"] ?? TextInputType.text,
-                        icon: f["icon"],
-                      )),
+                      ..._fields.map(
+                        (f) => _buildTextField(
+                          f["label"],
+                          controllers[f["key"]]!,
+                          primaryColor,
+                          keyboardType: f["keyboardType"] ?? TextInputType.text,
+                          icon: f["icon"],
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       SizedBox(
                         height: 55,
@@ -236,8 +276,13 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
                             backgroundColor: primaryColor,
                             foregroundColor: AppColors.white,
                             padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                             elevation: 2,
                           ),
                           onPressed: _submitForm,
@@ -255,4 +300,3 @@ class _AddBankDetailsScreenState extends State<AddBankDetailsScreen> {
     );
   }
 }
-

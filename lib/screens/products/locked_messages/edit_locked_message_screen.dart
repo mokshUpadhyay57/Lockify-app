@@ -10,6 +10,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:path/path.dart' as p;
+import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/utils/snackbar.dart';
 
 enum MediaType { image, video, document }
@@ -38,7 +39,22 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
   final TextEditingController lockedContentController = TextEditingController();
 
   String? selectedExpiryTime;
-  final List<String> expiryOptions = ['1 hour', '2 hours', '3 hours','4 hours','5 hours', '12 hours', '1 day', '3 days', '7 days', '15 days', '1 month','3 months','6 months', '1 year'];
+  final List<String> expiryOptions = [
+    '1 hour',
+    '2 hours',
+    '3 hours',
+    '4 hours',
+    '5 hours',
+    '12 hours',
+    '1 day',
+    '3 days',
+    '7 days',
+    '15 days',
+    '1 month',
+    '3 months',
+    '6 months',
+    '1 year',
+  ];
 
   bool isLoading = true;
   bool isUploading = false;
@@ -52,13 +68,15 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
 
   Future<void> _loadMessageData() async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('lockedMessages')
-          .doc(widget.documentId)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('lockedMessages')
+              .doc(widget.documentId)
+              .get();
 
       if (doc.exists) {
         final data = doc.data()!;
+        if (!mounted) return;
         setState(() {
           teaserTextController.text = data['teaserText'] ?? '';
           unlockPriceController.text = data['unlockPrice']?.toString() ?? '';
@@ -73,12 +91,15 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
           isLoading = false;
         });
       } else {
+        if (!mounted) return;
         Navigator.pop(context);
         AppSnackBar.error(context, 'Message not found.');
       }
     } catch (e) {
-      debugPrint('Error loading message: $e');
-      setState(() => isLoading = false);
+      AppLogger.error('Error loading message', error: e);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -90,32 +111,45 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
   Future<void> openCameraOrGallery() async {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primaryPurple),
-              title: const Text('Take Photo'),
-              onTap: () async {
-                Navigator.pop(context);
-                final result = await _picker.pickImage(source: ImageSource.camera);
-                if (result != null) setState(() => _newImage = result);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primaryPurple),
-              title: const Text('Choose from Gallery'),
-              onTap: () async {
-                Navigator.pop(context);
-                final result = await _picker.pickImage(source: ImageSource.gallery);
-                if (result != null) setState(() => _newImage = result);
-              },
-            ),
-          ],
-        ),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: AppColors.primaryPurple,
+                  ),
+                  title: const Text('Take Photo'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final result = await _picker.pickImage(
+                      source: ImageSource.camera,
+                    );
+                    if (result != null) setState(() => _newImage = result);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: AppColors.primaryPurple,
+                  ),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final result = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                    );
+                    if (result != null) setState(() => _newImage = result);
+                  },
+                ),
+              ],
+            ),
+          ),
     );
   }
 
@@ -126,18 +160,26 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
     }
   }
 
-  Future<String?> compressAndUploadMedia(File file, String path, MediaType type) async {
+  Future<String?> compressAndUploadMedia(
+    File file,
+    String path,
+    MediaType type,
+  ) async {
     try {
       var uploadFile = file;
       if (type == MediaType.image) {
-        final compressedFilePath = file.path.replaceAll(RegExp(r'\.\w+$'), '.webp');
+        final compressedFilePath = file.path.replaceAll(
+          RegExp(r'\.\w+$'),
+          '.webp',
+        );
         final compressedBytes = await FlutterImageCompress.compressWithFile(
           file.path,
           quality: 50,
           format: CompressFormat.webp,
         );
         if (compressedBytes != null) {
-          uploadFile = File(compressedFilePath)..writeAsBytesSync(compressedBytes);
+          uploadFile = File(compressedFilePath)
+            ..writeAsBytesSync(compressedBytes);
         }
       } else if (type == MediaType.video) {
         final info = await VideoCompress.compressVideo(
@@ -152,7 +194,7 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
       final uploadTask = await ref.putFile(uploadFile);
       return await uploadTask.ref.getDownloadURL();
     } catch (e) {
-      debugPrint('Error compressing/uploading media: $e');
+      AppLogger.error('Error compressing/uploading media', error: e);
       return null;
     }
   }
@@ -196,6 +238,7 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
           MediaType.document,
         );
       }
+      if (!mounted) return;
 
       final updatedData = {
         'teaserText': teaserText,
@@ -209,14 +252,20 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
         'isPublic': isPublic,
       };
 
-      await FirebaseFirestore.instance.collection('lockedMessages').doc(widget.documentId).update(updatedData);
+      await FirebaseFirestore.instance
+          .collection('lockedMessages')
+          .doc(widget.documentId)
+          .update(updatedData);
+      if (!mounted) return;
       AppSnackBar.success(context, 'Locked message updated successfully!');
       Navigator.pop(context);
     } catch (e) {
-      debugPrint('Error updating locked message: $e');
+      AppLogger.error('Error updating locked message', error: e);
       AppSnackBar.error(context, 'Failed to update locked message.');
     } finally {
-      setState(() => isUploading = false);
+      if (mounted) {
+        setState(() => isUploading = false);
+      }
     }
   }
 
@@ -224,7 +273,10 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(backgroundColor: AppColors.primaryPurple, title: const Text("Edit Locked Message")),
+        appBar: AppBar(
+          backgroundColor: AppColors.primaryPurple,
+          title: const Text("Edit Locked Message"),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -233,11 +285,20 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryPurple,
         foregroundColor: AppColors.white,
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         leadingWidth: 35,
-        title: const Text("Edit Locked Message", style: TextStyle(fontSize: 18)),
+        title: const Text(
+          "Edit Locked Message",
+          style: TextStyle(fontSize: 18),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.check), onPressed: isUploading ? null : updateLockedMessage),
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: isUploading ? null : updateLockedMessage,
+          ),
           const SizedBox(width: 10),
         ],
       ),
@@ -254,8 +315,15 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                   contentPadding: EdgeInsets.all(8),
                   hintText: "Enter teaser message",
                   border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.grey)),
-                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryPurple, width: 2)),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: AppColors.primaryPurple,
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -270,8 +338,15 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                   contentPadding: EdgeInsets.all(8),
                   hintText: "Enter price",
                   border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.grey)),
-                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryPurple, width: 2)),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: AppColors.primaryPurple,
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -284,8 +359,15 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                   contentPadding: EdgeInsets.all(8),
                   hintText: "Enter hidden message here",
                   border: UnderlineInputBorder(),
-                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.grey)),
-                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryPurple, width: 2)),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.grey),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: AppColors.primaryPurple,
+                      width: 2,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -296,30 +378,54 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                   label: "Image",
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: _newImage != null 
-                      ? Image.file(File(_newImage!.path), width: double.infinity, height: 180, fit: BoxFit.cover)
-                      : Image.network(_existingImageUrl!, width: double.infinity, height: 180, fit: BoxFit.cover),
+                    child:
+                        _newImage != null
+                            ? Image.file(
+                              File(_newImage!.path),
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            )
+                            : Image.network(
+                              _existingImageUrl!,
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            ),
                   ),
-                  onRemove: () => setState(() {
-                    _newImage = null;
-                    _existingImageUrl = null;
-                  }),
+                  onRemove:
+                      () => setState(() {
+                        _newImage = null;
+                        _existingImageUrl = null;
+                      }),
                 ),
-              
+
               if (_newDocument != null || _existingDocumentUrl != null)
-                 _buildMediaPreview(
+                _buildMediaPreview(
                   label: "Document",
                   child: Row(
                     children: [
-                      const Icon(Icons.insert_drive_file, size: 40, color: AppColors.primaryPurple),
+                      const Icon(
+                        Icons.insert_drive_file,
+                        size: 40,
+                        color: AppColors.primaryPurple,
+                      ),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(_newDocument != null ? p.basename(_newDocument!.path) : "Existing Document", overflow: TextOverflow.ellipsis)),
+                      Expanded(
+                        child: Text(
+                          _newDocument != null
+                              ? p.basename(_newDocument!.path)
+                              : "Existing Document",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ],
                   ),
-                  onRemove: () => setState(() {
-                    _newDocument = null;
-                    _existingDocumentUrl = null;
-                  }),
+                  onRemove:
+                      () => setState(() {
+                        _newDocument = null;
+                        _existingDocumentUrl = null;
+                      }),
                 ),
 
               // Media Actions
@@ -339,7 +445,10 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
               _buildSectionHeader("Advanced Settings", Icons.settings),
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 18,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(14),
@@ -349,7 +458,10 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                   children: [
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text("Expire message", style: TextStyle(fontWeight: FontWeight.w600)),
+                      title: const Text(
+                        "Expire message",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       value: expireMessage,
                       activeColor: AppColors.primaryPurple,
                       onChanged: (val) => setState(() => expireMessage = val),
@@ -357,14 +469,26 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                     if (expireMessage)
                       DropdownButton<String>(
                         value: selectedExpiryTime,
-                        items: expiryOptions.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-                        onChanged: (v) => setState(() => selectedExpiryTime = v),
+                        items:
+                            expiryOptions
+                                .map(
+                                  (o) => DropdownMenuItem(
+                                    value: o,
+                                    child: Text(o),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged:
+                            (v) => setState(() => selectedExpiryTime = v),
                         isExpanded: true,
                         hint: const Text("Select Expiry Time"),
                       ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text("Make Message public", style: TextStyle(fontWeight: FontWeight.w600)),
+                      title: const Text(
+                        "Make Message public",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                       value: isPublic,
                       activeColor: AppColors.primaryPurple,
                       onChanged: (val) => setState(() => isPublic = val),
@@ -381,7 +505,11 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
                   color: AppColors.black.withOpacity(0.1),
-                  child: const Center(child: CircularProgressIndicator(color: AppColors.primaryPurple)),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryPurple,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -391,42 +519,68 @@ class EditLockedMessageScreenState extends State<EditLockedMessageScreen> {
   }
 
   Widget _buildSectionHeader(String title, IconData icon) => Padding(
-        padding: const EdgeInsets.only(bottom: 8, top: 8),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primaryPurple, size: 16),
-            const SizedBox(width: 10),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15, color: AppColors.primaryPurple)),
-          ],
+    padding: const EdgeInsets.only(bottom: 8, top: 8),
+    child: Row(
+      children: [
+        Icon(icon, color: AppColors.primaryPurple, size: 16),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+            color: AppColors.primaryPurple,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
-  Widget _buildMediaPreview({required String label, required Widget child, required VoidCallback onRemove}) => Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.purple50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.purple100),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildMediaPreview({
+    required String label,
+    required Widget child,
+    required VoidCallback onRemove,
+  }) => Container(
+    margin: const EdgeInsets.symmetric(vertical: 10),
+    padding: const EdgeInsets.all(8),
+    decoration: BoxDecoration(
+      color: AppColors.purple50,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.purple100),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryPurple)),
-                IconButton(icon: const Icon(Icons.close, color: AppColors.errorRed, size: 20), onPressed: onRemove),
-              ],
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryPurple,
+              ),
             ),
-            child,
+            IconButton(
+              icon: const Icon(
+                Icons.close,
+                color: AppColors.errorRed,
+                size: 20,
+              ),
+              onPressed: onRemove,
+            ),
           ],
         ),
-      );
+        child,
+      ],
+    ),
+  );
 
   Widget _buildMediaIcon(IconData icon, VoidCallback onTap) => InkWell(
-        onTap: onTap,
-        child: Padding(padding: const EdgeInsets.all(10), child: Icon(icon, color: AppColors.primaryPurple, size: 30)),
-      );
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.all(10),
+      child: Icon(icon, color: AppColors.primaryPurple, size: 30),
+    ),
+  );
 }
-

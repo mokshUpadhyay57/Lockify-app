@@ -9,6 +9,7 @@ import 'package:lockify/screens/products/participant_selection_screen.dart';
 import 'package:lockify/services/channel/channel_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/utils/snackbar.dart';
 
 class ChannelSettingScreen extends StatefulWidget {
@@ -24,8 +25,8 @@ class ChannelSettingScreen extends StatefulWidget {
     required this.name,
     required this.description,
     required this.image,
-    required this.isPaidChannel, 
-    required this.paymentPeriod, 
+    required this.isPaidChannel,
+    required this.paymentPeriod,
     required this.subscriptionPrice,
   });
 
@@ -35,7 +36,7 @@ class ChannelSettingScreen extends StatefulWidget {
 
 Future<String?> _compressImageAndReturnDownloadString(File file) async {
   try {
-    debugPrint('Compressing image to WebP format...');
+    AppLogger.debug('Compressing image to WebP format...');
     final compressedFilePath = file.path.replaceAll(RegExp(r'\.\w+$'), '.webp');
 
     final compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -45,20 +46,25 @@ Future<String?> _compressImageAndReturnDownloadString(File file) async {
     );
 
     if (compressedBytes != null) {
-      final compressedFile = File(compressedFilePath)..writeAsBytesSync(compressedBytes);
-      debugPrint('Image compression successful.');
-      debugPrint('Original size: ${await file.length() / 1024} KB');
-      debugPrint('Compressed size: ${await compressedFile.length() / 1024} KB');
+      final compressedFile = File(compressedFilePath)
+        ..writeAsBytesSync(compressedBytes);
+      AppLogger.debug('Image compression successful.');
+      AppLogger.debug('Original size: ${await file.length() / 1024} KB');
+      AppLogger.debug(
+        'Compressed size: ${await compressedFile.length() / 1024} KB',
+      );
 
       // Upload to Firebase Storage
-      final ref = FirebaseStorage.instance.ref().child('channels/${DateTime.now().millisecondsSinceEpoch}.webp');
+      final ref = FirebaseStorage.instance.ref().child(
+        'channels/${DateTime.now().millisecondsSinceEpoch}.webp',
+      );
       final uploadTask = await ref.putFile(compressedFile);
       return await uploadTask.ref.getDownloadURL();
     } else {
-      debugPrint('Failed to compress image.');
+      AppLogger.debug('Failed to compress image.');
     }
   } catch (e) {
-    debugPrint('Error compressing image: $e');
+    AppLogger.error('Error compressing image', error: e);
   }
   return null;
 }
@@ -75,11 +81,13 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
   String generateUniqueCode([int length = 8]) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     final rand = Random.secure();
-    return List.generate(length, (index) => chars[rand.nextInt(chars.length)]).join();
+    return List.generate(
+      length,
+      (index) => chars[rand.nextInt(chars.length)],
+    ).join();
   }
 
   String get channelLink => '$baseUrl$uniqueCode';
-
 
   @override
   void initState() {
@@ -106,8 +114,11 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
             onPressed: () async {
               String? imageUrl;
               if (widget.image != null) {
-                imageUrl = await _compressImageAndReturnDownloadString(widget.image!);
+                imageUrl = await _compressImageAndReturnDownloadString(
+                  widget.image!,
+                );
               }
+              if (!context.mounted) return;
 
               // Use the generated uniqueCode for the channel link
               final channelId = await ChannelService().createChannel(
@@ -122,21 +133,26 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                 subscriptionPrice: widget.subscriptionPrice,
                 url: channelLink, // Pass the generated link
               );
+              if (!context.mounted) return;
 
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ParticipantSelectionScreen(
-                    title: 'Add Subscribers',
-                    onConfirm: (phones) async {
-                      await ChannelService().addParticipants(channelId, phones);
-                    },
-                  ),
+                  builder:
+                      (context) => ParticipantSelectionScreen(
+                        title: 'Add Subscribers',
+                        onConfirm: (phones) async {
+                          await ChannelService().addParticipants(
+                            channelId,
+                            phones,
+                          );
+                        },
+                      ),
                 ),
               );
             },
           ),
-          const SizedBox(width: 10)
+          const SizedBox(width: 10),
         ],
       ),
       body: ListView(
@@ -160,7 +176,9 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
           // Channel Type Section
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               child: Column(
@@ -175,7 +193,13 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                         size: 20,
                       ),
                       const SizedBox(width: 10),
-                      const Text("Channel Type", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        "Channel Type",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   RadioListTile(
@@ -183,7 +207,9 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                     groupValue: channelType,
                     onChanged: (value) => setState(() => channelType = value!),
                     title: const Text("Public Channel"),
-                    subtitle: const Text("Anyone can join and find the channel."),
+                    subtitle: const Text(
+                      "Anyone can join and find the channel.",
+                    ),
                   ),
                   RadioListTile(
                     value: 'Private',
@@ -201,7 +227,9 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
           // Channel Privacy Section
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               child: Column(
@@ -216,19 +244,29 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                         size: 20,
                       ),
                       const SizedBox(width: 10),
-                      const Text("Channel Privacy", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        "Channel Privacy",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   RadioListTile(
                     value: 'Everyone',
                     groupValue: subscriberVisibility,
-                    onChanged: (value) => setState(() => subscriberVisibility = value!),
+                    onChanged:
+                        (value) =>
+                            setState(() => subscriberVisibility = value!),
                     title: const Text("Show subscriber count to everyone"),
                   ),
                   RadioListTile(
                     value: 'Owner',
                     groupValue: subscriberVisibility,
-                    onChanged: (value) => setState(() => subscriberVisibility = value!),
+                    onChanged:
+                        (value) =>
+                            setState(() => subscriberVisibility = value!),
                     title: const Text("Show subscriber count to only owner"),
                   ),
                 ],
@@ -240,7 +278,9 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
           // Restrict Content Saving Section
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               child: SwitchListTile(
@@ -249,7 +289,8 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                   "Subscribers won't be able to take screenshot or record screen of this channel",
                 ),
                 value: restrictContentSaving,
-                onChanged: (value) => setState(() => restrictContentSaving = value),
+                onChanged:
+                    (value) => setState(() => restrictContentSaving = value),
               ),
             ),
           ),
@@ -258,7 +299,9 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
           // Channel Link Section
           Card(
             color: AppColors.purple50,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
               child: Column(
@@ -267,10 +310,16 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                   Center(
                     child: DottedBorder(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 16,
+                        ),
                         child: SelectableText(
                           channelLink,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -291,8 +340,13 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                         icon: const Icon(Icons.copy),
                         label: const Text("Copy"),
                         onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: channelLink));
-                          AppSnackBar.success(context, 'Link copied to clipboard!');
+                          await Clipboard.setData(
+                            ClipboardData(text: channelLink),
+                          );
+                          AppSnackBar.success(
+                            context,
+                            'Link copied to clipboard!',
+                          );
                         },
                       ),
                       const SizedBox(width: 35),
@@ -321,4 +375,3 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
     );
   }
 }
-

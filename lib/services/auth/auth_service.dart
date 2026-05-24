@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/utils/contacts.dart' as contact_util;
 
 class AuthService {
@@ -25,7 +26,7 @@ class AuthService {
         return _cachedContacts!;
       }
     }
-    
+
     _cachedContacts = await contact_util.getContacts(context);
     _lastContactFetch = now;
     return _cachedContacts!;
@@ -47,7 +48,8 @@ class AuthService {
 
     // 1. Priority: Local Contacts
     for (var contact in localContacts) {
-      if (contact.phones.isNotEmpty && normalizePhone(contact.phones.first.number) == normalized) {
+      if (contact.phones.isNotEmpty &&
+          normalizePhone(contact.phones.first.number) == normalized) {
         return contact.displayName;
       }
     }
@@ -127,7 +129,8 @@ class AuthService {
   ) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email, password: password,
+        email: email,
+        password: password,
       );
 
       // save user data to Firestore if not already exists
@@ -154,7 +157,8 @@ class AuthService {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
     // Obtain the auth details from the request
-    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+    final GoogleSignInAuthentication? googleAuth =
+        await googleUser?.authentication;
 
     // Create a new credential
     final credential = GoogleAuthProvider.credential(
@@ -163,7 +167,9 @@ class AuthService {
     );
 
     // Once signed in, return the UserCredential
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(
+      credential,
+    );
 
     // Save user data to Firestore if needed
     await _firestore.collection('users').doc(userCredential.user?.uid).set({
@@ -172,7 +178,7 @@ class AuthService {
       'uid': userCredential.user?.uid,
       'lastLogin': DateTime.now(),
     }, SetOptions(merge: true));
-    
+
     return userCredential;
   }
 
@@ -188,7 +194,7 @@ class AuthService {
             await GoogleSignIn().signOut();
           }
         }
-      } else{
+      } else {
         // Sign out from other providers
         await _auth.signOut();
       }
@@ -212,11 +218,12 @@ class AuthService {
 
   // check if email exists
   Future<bool> emailExists(String email) async {
-    final query = await FirebaseFirestore.instance
-        .collection('users')
-        .where('email', isEqualTo: email)
-        .limit(1)
-        .get();
+    final query =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
     return query.docs.isNotEmpty;
   }
 
@@ -224,10 +231,14 @@ class AuthService {
   Future<void> updateUserPresence(bool isOnline) async {
     final user = _auth.currentUser;
     if (user != null) {
-      await _firestore.collection('users').doc(user.uid).update({
-        'isOnline': isOnline,
-        'lastSeen': FieldValue.serverTimestamp(),
-      }).catchError((e) => debugPrint("Error updating presence: $e"));
+      try {
+        await _firestore.collection('users').doc(user.uid).update({
+          'isOnline': isOnline,
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        AppLogger.error('Error updating presence', error: e);
+      }
     }
   }
 
@@ -243,11 +254,15 @@ class AuthService {
     List<Map<String, dynamic>> users = [];
     // Firestore 'whereIn' limit is 30, so we chunk the UIDs
     for (var i = 0; i < uids.length; i += 30) {
-      final chunk = uids.sublist(i, i + 30 > uids.length ? uids.length : i + 30);
-      final query = await _firestore
-          .collection('users')
-          .where('uid', whereIn: chunk)
-          .get();
+      final chunk = uids.sublist(
+        i,
+        i + 30 > uids.length ? uids.length : i + 30,
+      );
+      final query =
+          await _firestore
+              .collection('users')
+              .where('uid', whereIn: chunk)
+              .get();
       users.addAll(query.docs.map((doc) => doc.data()));
     }
     return users;
@@ -257,7 +272,7 @@ class AuthService {
   Future<String> getCurrentUserPhone() async {
     final user = _auth.currentUser;
     if (user == null) return "";
-    
+
     if (user.phoneNumber != null && user.phoneNumber!.isNotEmpty) {
       return normalizePhone(user.phoneNumber!);
     }
@@ -278,18 +293,18 @@ class AuthService {
 
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
     final data = userDoc.data();
-    
+
     final name = data?['name'] as String?;
     if (name != null && name.isNotEmpty) return name;
-    
+
     final firstName = data?['firstName'] as String? ?? "";
     final lastName = data?['lastName'] as String? ?? "";
     final fullName = "$firstName $lastName".trim();
     if (fullName.isNotEmpty) return fullName;
-    
+
     final phone = data?['phone'] as String?;
     if (phone != null && phone.isNotEmpty) return phone;
-    
+
     if (user.email != null && user.email!.isNotEmpty) {
       return user.email!.split('@')[0];
     }

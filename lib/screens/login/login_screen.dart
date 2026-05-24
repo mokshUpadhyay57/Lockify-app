@@ -7,8 +7,9 @@ import 'package:lockify/home_screen.dart';
 import 'package:lockify/screens/login/password_reset_screen.dart';
 import 'package:lockify/screens/register/register_screen.dart';
 import 'package:lockify/services/auth/auth_service.dart';
+import 'package:lockify/utils/app_ui.dart';
 import 'package:lockify/utils/text_style.dart';
- // Import the styles
+// Import the styles
 
 class LoginScreen extends StatelessWidget {
   // Controllers for email and password fields
@@ -28,20 +29,25 @@ class LoginScreen extends StatelessWidget {
     }
 
     try {
-      final userCredential = await AuthService().signInWithEmailAndPassword(email, password);
+      final userCredential = await AuthService().signInWithEmailAndPassword(
+        email,
+        password,
+      );
       final user = userCredential.user;
 
       await user?.reload(); // Refresh user data
       // if (user != null && !user.emailVerified) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text('Please verify your email before logging in.'), backgroundColor: AppColors.errorRed),
-        // );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(content: Text('Please verify your email before logging in.'), backgroundColor: AppColors.errorRed),
+      // );
       // } else {
-        // Navigate to home page
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LockifyHomePage()));
+      // Navigate to home page
+      AppNavigation.pushReplacement(
+        MaterialPageRoute(builder: (context) => LockifyHomePage()),
+      );
       // }
     } catch (e) {
-      AppSnackBar.error(context, e.toString());
+      AppSnackBar.error(null, e.toString());
     }
   }
 
@@ -64,8 +70,16 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 30),
 
             // Email and password text fields
-            MyTextField(icon: Icons.email, label: 'Email', controller: _emailController),
-            MyTextField(icon: Icons.lock, label: 'Password', controller: _passwordController),
+            MyTextField(
+              icon: Icons.email,
+              label: 'Email',
+              controller: _emailController,
+            ),
+            MyTextField(
+              icon: Icons.lock,
+              label: 'Password',
+              controller: _passwordController,
+            ),
 
             Padding(
               padding: const EdgeInsets.only(right: 35.0),
@@ -74,13 +88,24 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
 
                 children: [
-                  const Text('Forgot Password?', style: AppStyles.regularTextStyle),
+                  const Text(
+                    'Forgot Password?',
+                    style: AppStyles.regularTextStyle,
+                  ),
                   const SizedBox(width: 5),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ResetPasswordScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ResetPasswordScreen(),
+                        ),
+                      );
                     },
-                    child: const Text('Reset Now', style: AppStyles.linkTextStyle),
+                    child: const Text(
+                      'Reset Now',
+                      style: AppStyles.linkTextStyle,
+                    ),
                   ),
                 ],
               ),
@@ -102,7 +127,10 @@ class LoginScreen extends StatelessWidget {
                 SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text('OR', style: TextStyle(fontSize: 14, color: AppColors.grey)),
+                  child: Text(
+                    'OR',
+                    style: TextStyle(fontSize: 14, color: AppColors.grey),
+                  ),
                 ),
                 SizedBox(height: 20),
                 const Expanded(child: Divider(endIndent: 45)),
@@ -114,9 +142,11 @@ class LoginScreen extends StatelessWidget {
               onTap: () async {
                 try {
                   await AuthService().signInWithGoogle();
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LockifyHomePage()));
+                  AppNavigation.pushReplacement(
+                    MaterialPageRoute(builder: (context) => LockifyHomePage()),
+                  );
                 } catch (e) {
-                  AppSnackBar.error(context, e.toString());
+                  AppSnackBar.error(null, e.toString());
                 }
               },
             ),
@@ -133,9 +163,15 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(width: 5),
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => RegisterScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegisterScreen()),
+                    );
                   },
-                  child: const Text('Register Now', style: AppStyles.linkTextStyle),
+                  child: const Text(
+                    'Register Now',
+                    style: AppStyles.linkTextStyle,
+                  ),
                 ),
               ],
             ),
@@ -145,4 +181,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lockify Flutter Feature"
+  short_description: "Build Flutter features in Lockify's existing style"
+  default_prompt: "Use $lockify-flutter-feature to implement a focused Flutter UI or service change in Lockify."

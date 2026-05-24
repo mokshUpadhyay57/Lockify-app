@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart'; // For CupertinoIcons
-import 'package:logger/logger.dart';
+import 'package:lockify/utils/app_logger.dart';
 
 // All Settings Options
 import 'package:lockify/screens/settings/setting/account_privacy.dart';
@@ -11,9 +11,6 @@ import 'package:lockify/screens/settings/setting/signout.dart';
 // import 'package:lockify/screens/settings/setting/upload_invoice.dart';
 import 'package:lockify/screens/settings/setting/whatsapp_help_screen.dart';
 import 'package:lockify/screens/settings/lists/locked_messages.dart';
-
-// Initialize the logger
-final Logger logger = Logger();
 
 class SettingsOption {
   final String title;
@@ -41,11 +38,11 @@ final List<SettingsOption> settingsOptions = [
     materialIcon: Icons.person,
     cupertinoIcon: CupertinoIcons.person,
     onTap: (BuildContext context) {
-       Navigator.push(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => UpdateProfileScreen()),
       );
-      logger.i('Navigate to Profile');
+      AppLogger.info('Navigate to Profile');
     },
   ),
   SettingsOption(
@@ -58,7 +55,7 @@ final List<SettingsOption> settingsOptions = [
         context,
         MaterialPageRoute(builder: (context) => const LockedMessagesPage()),
       );
-      logger.i('Navigate to Lock Direct Message');
+      AppLogger.info('Navigate to Lock Direct Message');
     },
   ),
   SettingsOption(
@@ -71,7 +68,7 @@ final List<SettingsOption> settingsOptions = [
         context,
         MaterialPageRoute(builder: (context) => AddProfileIntroPage()),
       );
-      logger.i('Add Profile Intro');
+      AppLogger.info('Add Profile Intro');
     },
   ),
   SettingsOption(
@@ -84,7 +81,7 @@ final List<SettingsOption> settingsOptions = [
         context,
         MaterialPageRoute(builder: (context) => AccountPrivacyPage()),
       );
-      logger.i('Navigate to Account & Privacy');
+      AppLogger.info('Navigate to Account & Privacy');
     },
   ),
   SettingsOption(
@@ -97,7 +94,7 @@ final List<SettingsOption> settingsOptions = [
         context,
         MaterialPageRoute(builder: (context) => FAQsPage()),
       );
-      logger.i('Navigate to FAQs');
+      AppLogger.info('Navigate to FAQs');
     },
   ),
   // SettingsOption(
@@ -110,7 +107,7 @@ final List<SettingsOption> settingsOptions = [
   //       context,
   //       MaterialPageRoute(builder: (context) => UploadInvoicePage()),
   //     );
-  //     logger.i('Upload Invoice Detail');
+  //     AppLogger.info('Upload Invoice Detail');
   //   },
   // ),
   SettingsOption(
@@ -123,7 +120,7 @@ final List<SettingsOption> settingsOptions = [
         context,
         MaterialPageRoute(builder: (context) => WhatsAppHelpScreen()),
       );
-      logger.i('Navigate to WhatsApp Help');
+      AppLogger.info('Navigate to WhatsApp Help');
     },
   ),
   SettingsOption(
@@ -136,8 +133,8 @@ final List<SettingsOption> settingsOptions = [
         context,
         MaterialPageRoute(builder: (context) => SignOutPage()),
       );
-      logger.i('Sign Out');
-      logger.w('User signed out');
+      AppLogger.info('Sign Out');
+      AppLogger.warning('User signed out');
     },
   ),
 ];

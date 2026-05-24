@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lockify Firestore Performance"
+  short_description: "Reduce Lockify Firestore reads and duplicate work"
+  default_prompt: "Use $lockify-firestore-performance to review or optimize Lockify Firestore queries, listeners, and function costs."

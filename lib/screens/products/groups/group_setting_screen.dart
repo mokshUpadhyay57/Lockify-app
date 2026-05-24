@@ -9,6 +9,7 @@ import 'package:lockify/screens/products/groups/group_screen.dart';
 import 'package:lockify/screens/products/participant_selection_screen.dart';
 import 'package:lockify/services/admin/admin_service.dart';
 import 'package:lockify/services/group/group_service.dart';
+import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/utils/snackbar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -26,8 +27,8 @@ class GroupSettingScreen extends StatefulWidget {
     required this.name,
     required this.description,
     required this.image,
-    required this.isPaidGroup, 
-    required this.paymentPeriod, 
+    required this.isPaidGroup,
+    required this.paymentPeriod,
     this.subscriptionPrice,
   });
 
@@ -37,7 +38,7 @@ class GroupSettingScreen extends StatefulWidget {
 
 Future<String?> _compressImageAndReturnDownloadString(File file) async {
   try {
-    debugPrint('Compressing image to WebP format...');
+    AppLogger.debug('Compressing image to WebP format...');
     final compressedFilePath = file.path.replaceAll(RegExp(r'\.\w+$'), '.webp');
 
     final compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -47,20 +48,25 @@ Future<String?> _compressImageAndReturnDownloadString(File file) async {
     );
 
     if (compressedBytes != null) {
-      final compressedFile = File(compressedFilePath)..writeAsBytesSync(compressedBytes);
-      debugPrint('Image compression successful.');
-      debugPrint('Original size: ${await file.length() / 1024} KB');
-      debugPrint('Compressed size: ${await compressedFile.length() / 1024} KB');
+      final compressedFile = File(compressedFilePath)
+        ..writeAsBytesSync(compressedBytes);
+      AppLogger.debug('Image compression successful.');
+      AppLogger.debug('Original size: ${await file.length() / 1024} KB');
+      AppLogger.debug(
+        'Compressed size: ${await compressedFile.length() / 1024} KB',
+      );
 
       // Upload to Firebase Storage
-      final ref = FirebaseStorage.instance.ref().child('groups/${DateTime.now().millisecondsSinceEpoch}.webp');
+      final ref = FirebaseStorage.instance.ref().child(
+        'groups/${DateTime.now().millisecondsSinceEpoch}.webp',
+      );
       final uploadTask = await ref.putFile(compressedFile);
       return await uploadTask.ref.getDownloadURL();
     } else {
-      debugPrint('Failed to compress image.');
+      AppLogger.debug('Failed to compress image.');
     }
   } catch (e) {
-    debugPrint('Error compressing image: $e');
+    AppLogger.error('Error compressing image', error: e);
   }
   return null;
 }
@@ -74,15 +80,16 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
   String uniqueCode = "";
 
   // Generate a unique code for the group
- String generateUniqueCode([int length = 6]) {
+  String generateUniqueCode([int length = 6]) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     final rand = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(length, (index) => chars[(rand + index) % chars.length]).join();
+    return List.generate(
+      length,
+      (index) => chars[(rand + index) % chars.length],
+    ).join();
   }
 
   String get groupLink => '$baseUrl$uniqueCode';
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -107,13 +114,13 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: () async {
-
-
-
               String? imageUrl;
               if (widget.image != null) {
-                imageUrl = await _compressImageAndReturnDownloadString(widget.image!);
+                imageUrl = await _compressImageAndReturnDownloadString(
+                  widget.image!,
+                );
               }
+              if (!context.mounted) return;
 
               uniqueCode = generateUniqueCode(8);
 
@@ -129,31 +136,33 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                 paymentPeriod: widget.paymentPeriod,
                 url: groupLink,
               );
+              if (!context.mounted) return;
 
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ParticipantSelectionScreen(
-                    title: 'Add Members',
-                    onConfirm: (phones) async {
-                      final admins = await AdminService().getAdminByUid();
-                      if (admins != null) {
-                        await GroupService().addAdmins(groupId, admins);
-                      }
-                      await GroupService().addParticipants(groupId, phones);
-                    },
-                  ),
+                  builder:
+                      (context) => ParticipantSelectionScreen(
+                        title: 'Add Members',
+                        onConfirm: (phones) async {
+                          final admins = await AdminService().getAdminByUid();
+                          if (admins != null) {
+                            await GroupService().addAdmins(groupId, admins);
+                          }
+                          await GroupService().addParticipants(groupId, phones);
+                        },
+                      ),
                 ),
-              ).then((_) {
-                 Navigator.pushAndRemoveUntil(
-                  context, 
-                  MaterialPageRoute(builder: (context) => const GroupScreen()),
-                  (route) => route.isFirst
-                );
-              });
+              );
+              if (!context.mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const GroupScreen()),
+                (route) => route.isFirst,
+              );
             },
           ),
-          const SizedBox(width: 10)
+          const SizedBox(width: 10),
         ],
       ),
       body: ListView(
@@ -177,7 +186,9 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
           // Group Type Section
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               child: Column(
@@ -192,7 +203,13 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                         size: 20,
                       ),
                       const SizedBox(width: 10),
-                      const Text("Group Type", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        "Group Type",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   RadioListTile(
@@ -218,7 +235,9 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
           // Member Visibility Section
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               child: Column(
@@ -233,19 +252,27 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                         size: 20,
                       ),
                       const SizedBox(width: 10),
-                      const Text("Member Visibility", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        "Member Visibility",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   RadioListTile(
                     value: 'Everyone',
                     groupValue: memberVisibility,
-                    onChanged: (value) => setState(() => memberVisibility = value!),
+                    onChanged:
+                        (value) => setState(() => memberVisibility = value!),
                     title: const Text("Show member count to everyone"),
                   ),
                   RadioListTile(
                     value: 'Owner',
                     groupValue: memberVisibility,
-                    onChanged: (value) => setState(() => memberVisibility = value!),
+                    onChanged:
+                        (value) => setState(() => memberVisibility = value!),
                     title: const Text("Show member count to only owner"),
                   ),
                 ],
@@ -257,7 +284,9 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
           // Restrict Content Saving Section
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
               child: SwitchListTile(
@@ -266,7 +295,8 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                   "Members won't be able to take screenshot or record screen of this group",
                 ),
                 value: restrictContentSaving,
-                onChanged: (value) => setState(() => restrictContentSaving = value),
+                onChanged:
+                    (value) => setState(() => restrictContentSaving = value),
               ),
             ),
           ),
@@ -276,7 +306,9 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
           Card(
             color: AppColors.purple50,
             margin: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
               child: Column(
@@ -285,11 +317,17 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                   Center(
                     child: DottedBorder(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 16,
+                        ),
                         child: SelectableText(
                           // Display the generated group link
                           groupLink,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -310,8 +348,13 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                         icon: const Icon(Icons.copy),
                         label: const Text("Copy"),
                         onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: groupLink));
-                          AppSnackBar.success(context, 'Link copied to clipboard!');
+                          await Clipboard.setData(
+                            ClipboardData(text: groupLink),
+                          );
+                          AppSnackBar.success(
+                            context,
+                            'Link copied to clipboard!',
+                          );
                         },
                       ),
                       const SizedBox(width: 35),
@@ -340,4 +383,3 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
     );
   }
 }
-

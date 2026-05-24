@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:logger/logger.dart';
+import 'package:lockify/utils/app_logger.dart';
 
 class PurchaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -10,12 +10,10 @@ class PurchaseService {
   factory PurchaseService() => _instance;
   PurchaseService._internal();
 
-  final Logger logger = Logger();
-
   /// Get a stream of purchases for the current logged-in user
   Stream<List<QueryDocumentSnapshot>> streamMyPurchases() {
     final currentUser = _auth.currentUser;
-    logger.i("Fetching purchases for user: ${currentUser?.uid}");
+    AppLogger.info("Fetching purchases for user: ${currentUser?.uid}");
     if (currentUser == null) {
       return const Stream.empty();
     }
@@ -30,7 +28,9 @@ class PurchaseService {
   }
 
   /// Get the locked message details for a given lockedMessageId
-  Future<DocumentSnapshot<Map<String, dynamic>>> getLockedMessage(String messageId) {
+  Future<DocumentSnapshot<Map<String, dynamic>>> getLockedMessage(
+    String messageId,
+  ) {
     return _firestore.collection('lockedMessages').doc(messageId).get();
   }
 }

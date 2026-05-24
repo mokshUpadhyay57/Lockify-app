@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lockify Payment Functions"
+  short_description: "Maintain Lockify Cashfree and wallet functions"
+  default_prompt: "Use $lockify-payment-functions to change or debug Lockify's Cashfree payment, entitlement, or wallet backend flow."

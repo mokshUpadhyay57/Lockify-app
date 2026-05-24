@@ -1,10 +1,9 @@
 import 'package:lockify/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lockify/home_screen.dart';
 import 'package:lockify/screens/login/login_screen.dart';
-
+import 'package:lockify/utils/app_logger.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -18,14 +17,16 @@ class AuthGate extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryPurple),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.primaryPurple,
+                ),
               ),
             );
           } else if (snapshot.hasError) {
-            if (kDebugMode) {
-              print('AuthGate Error: ${snapshot.error}');
-            }
-            return Center(child: Text('Something went wrong. Please try again.'));
+            AppLogger.error('AuthGate Error', error: snapshot.error);
+            return Center(
+              child: Text('Something went wrong. Please try again.'),
+            );
           } else if (snapshot.hasData) {
             // User is signed in
             return LockifyHomePage(); // Redirect to the main screen
@@ -38,4 +39,3 @@ class AuthGate extends StatelessWidget {
     );
   }
 }
-

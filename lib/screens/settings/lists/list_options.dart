@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:lockify/screens/settings/lists/channel_screen.dart';
 import 'package:lockify/screens/settings/lists/group_screen.dart';
-import 'package:logger/logger.dart';
+import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/screens/settings/lists/locked_messages.dart';
-
-// Initialize the logger
-final Logger logger = Logger();
 
 class ListOption {
   final String title;
@@ -59,29 +56,30 @@ final List<ListOption> listOptions = [
 
 void _navigateTo(BuildContext context, Widget page, String pageName) {
   try {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => page),
-    );
-    logger.i('Navigated to $pageName');
+    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+    AppLogger.info('Navigated to $pageName');
   } catch (e) {
-    logger.e('Failed to navigate to $pageName: $e');
-    _showErrorDialog(context, 'Failed to navigate to $pageName. Please try again.');
+    AppLogger.error('Failed to navigate to $pageName', error: e);
+    _showErrorDialog(
+      context,
+      'Failed to navigate to $pageName. Please try again.',
+    );
   }
 }
 
 void _showErrorDialog(BuildContext context, String message) {
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Error'),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('OK'),
+    builder:
+        (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
         ),
-      ],
-    ),
   );
 }

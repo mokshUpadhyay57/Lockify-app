@@ -8,9 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:lockify/components/widgets/lockify_scaffold.dart';
 import 'package:lockify/components/widgets/subscription_card.dart';
 import 'package:lockify/utils/colors.dart';
-import 'package:logger/logger.dart';
-
-final logger = Logger();
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -199,10 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ifAbsent:
             () => _MessagePerformance(
               id: doc.id,
-              title:
-                  title == null || title.isEmpty
-                      ? "Locked message"
-                      : title,
+              title: title == null || title.isEmpty ? "Locked message" : title,
               totalSales: purchasedCount,
               earnings: purchasedCount * unlockPrice,
             ),
@@ -210,7 +204,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     final topMessages =
-        performanceByMessage.values.where((item) => item.totalSales > 0).toList()
+        performanceByMessage.values
+            .where((item) => item.totalSales > 0)
+            .toList()
           ..sort((a, b) => b.totalSales.compareTo(a.totalSales));
 
     int subscriptionSales = 0;
@@ -257,8 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       totalEarnings: totalEarnings,
       availableBalance: availableBalance,
       pendingBalance: pendingBalance,
-      rangeEarnings:
-          rangeEarnings > 0 ? rangeEarnings : salesFallbackEarnings,
+      rangeEarnings: rangeEarnings > 0 ? rangeEarnings : salesFallbackEarnings,
       rangeSales: rangeSales,
       activeLockedMessages: activeLockedMessages,
       topMessages: topMessages.take(5).toList(),
@@ -272,11 +267,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final mainTabs = [
-      "Overview",
-      "Earnings",
-      "Subscription",
-    ];
+    final mainTabs = ["Overview", "Earnings", "Subscription"];
 
     return LockifyScaffold(
       title: "Dashboard",
@@ -510,11 +501,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.only(top: 16, bottom: 60),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _dateFilter(),
-          const SizedBox(height: 16),
-          ...children,
-        ],
+        children: [_dateFilter(), const SizedBox(height: 16), ...children],
       ),
     );
   }
@@ -643,7 +630,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return !date.isBefore(_rangeStart) && date.isBefore(_rangeEndExclusive);
   }
 
-  DateTime _dateOnly(DateTime date) => DateTime(date.year, date.month, date.day);
+  DateTime _dateOnly(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   String _bucketKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
 
@@ -732,11 +720,7 @@ class _DailyBucket {
   double earnings;
   int sales;
 
-  _DailyBucket({
-    required this.date,
-    this.earnings = 0,
-    this.sales = 0,
-  });
+  _DailyBucket({required this.date, this.earnings = 0, this.sales = 0});
 }
 
 class _MessagePerformance {
@@ -779,13 +763,9 @@ class _EarningsLineChart extends StatelessWidget {
               for (var i = 0; i < buckets.length; i++)
                 i == buckets.length - 1 ? fallbackEarnings : 0.0,
             ];
-    final maxY = math.max(
-      1.0,
-      values.fold<double>(0, math.max) * 1.2,
-    );
+    final maxY = math.max(1.0, values.fold<double>(0, math.max) * 1.2);
     final spots = [
-      for (var i = 0; i < buckets.length; i++)
-        FlSpot(i.toDouble(), values[i]),
+      for (var i = 0; i < buckets.length; i++) FlSpot(i.toDouble(), values[i]),
     ];
 
     return _ChartFrame(
@@ -843,8 +823,11 @@ class _EarningsSnapshotChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = [availableBalance, pendingBalance, rangeEarnings]
-        .fold<double>(0, (sum, value) => sum + value);
+    final total = [
+      availableBalance,
+      pendingBalance,
+      rangeEarnings,
+    ].fold<double>(0, (sum, value) => sum + value);
     final safeTotal = total <= 0 ? 1.0 : total;
     final items = [
       ("Available", availableBalance, AppColors.primaryPurple),
@@ -951,7 +934,8 @@ class _SalesBarChart extends StatelessWidget {
                   BarChartRodData(
                     toY: buckets[i].sales.toDouble(),
                     width: buckets.length > 31 ? 5 : 10,
-                    color: hasData ? AppColors.primaryPurple : AppColors.grey300,
+                    color:
+                        hasData ? AppColors.primaryPurple : AppColors.grey300,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ],
@@ -977,10 +961,11 @@ class _TopMessagesChart extends StatelessWidget {
       );
     }
 
-    final maxSales = messages
-        .map((message) => message.totalSales)
-        .fold<int>(1, math.max)
-        .toDouble();
+    final maxSales =
+        messages
+            .map((message) => message.totalSales)
+            .fold<int>(1, math.max)
+            .toDouble();
 
     return Container(
       height: 180,
@@ -1048,10 +1033,7 @@ class _ChartFrame extends StatelessWidget {
   final Widget child;
   final String? emptyLabel;
 
-  const _ChartFrame({
-    required this.child,
-    this.emptyLabel,
-  });
+  const _ChartFrame({required this.child, this.emptyLabel});
 
   @override
   Widget build(BuildContext context) {

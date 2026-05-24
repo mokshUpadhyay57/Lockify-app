@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-
+import 'package:lockify/utils/app_logger.dart';
 
 class UploadScreen extends StatefulWidget {
   final String type; // Type of verification (Aadhar or PAN)
@@ -25,8 +25,11 @@ class _UploadScreenState extends State<UploadScreen> {
 
   Future<File?> _compressImage(File file) async {
     try {
-      debugPrint('Compressing image to WebP format...');
-      final compressedFilePath = file.path.replaceAll(RegExp(r'\.\w+$'), '.webp');
+      AppLogger.debug('Compressing image to WebP format...');
+      final compressedFilePath = file.path.replaceAll(
+        RegExp(r'\.\w+$'),
+        '.webp',
+      );
 
       final compressedBytes = await FlutterImageCompress.compressWithFile(
         file.path,
@@ -35,16 +38,19 @@ class _UploadScreenState extends State<UploadScreen> {
       );
 
       if (compressedBytes != null) {
-        final compressedFile = File(compressedFilePath)..writeAsBytesSync(compressedBytes);
-        debugPrint('Image compression successful.');
-        debugPrint('Original size: ${await file.length()} bytes');
-        debugPrint('Compressed size: ${await compressedFile.length()} bytes');
+        final compressedFile = File(compressedFilePath)
+          ..writeAsBytesSync(compressedBytes);
+        AppLogger.debug('Image compression successful.');
+        AppLogger.debug('Original size: ${await file.length()} bytes');
+        AppLogger.debug(
+          'Compressed size: ${await compressedFile.length()} bytes',
+        );
         return compressedFile;
       } else {
-        debugPrint('Failed to compress image.');
+        AppLogger.debug('Failed to compress image.');
       }
     } catch (e) {
-      debugPrint('Error compressing image: $e');
+      AppLogger.error('Error compressing image', error: e);
     }
     return null;
   }
@@ -56,33 +62,40 @@ class _UploadScreenState extends State<UploadScreen> {
       if (image != null) {
         final file = File(image.path);
         final fileSize = await file.length();
+        if (!mounted) return;
 
         if (fileSize > 10 * 1024 * 1024) {
-          AppSnackBar.warning(context, 'File size exceeds 10MB. Please select a smaller file.');
+          AppSnackBar.warning(
+            context,
+            'File size exceeds 10MB. Please select a smaller file.',
+          );
           return;
         }
 
         final compressedFile = await _compressImage(file);
+        if (!mounted) return;
 
         if (compressedFile != null) {
           setState(() {
             _selectedImage = compressedFile;
           });
-          AppSnackBar.success(context, 'Image selected and compressed successfully.');
+          AppSnackBar.success(
+            context,
+            'Image selected and compressed successfully.',
+          );
         } else {
           AppSnackBar.error(context, 'Failed to compress the image.');
         }
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      AppLogger.error('Error picking image', error: e);
       AppSnackBar.error(context, 'Failed to pick an image.');
     }
   }
 
   Future<void> _uploadImage() async {
-    
     final userId = FirebaseAuth.instance.currentUser?.uid;
-    
+
     if (_selectedImage == null) {
       AppSnackBar.warning(context, 'Please select an image to upload.');
       return;
@@ -93,9 +106,9 @@ class _UploadScreenState extends State<UploadScreen> {
     });
 
     try {
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('verification/${widget.type}/${DateTime.now().millisecondsSinceEpoch}.webp');
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'verification/${widget.type}/${DateTime.now().millisecondsSinceEpoch}.webp',
+      );
       await storageRef.putFile(_selectedImage!);
 
       final downloadUrl = await storageRef.getDownloadURL();
@@ -108,14 +121,17 @@ class _UploadScreenState extends State<UploadScreen> {
         'uploadedAt': Timestamp.now(),
       });
 
+      if (!mounted) return;
       AppSnackBar.success(context, '${widget.type} uploaded successfully!');
     } catch (e) {
-      debugPrint('Error uploading image: $e');
+      AppLogger.error('Error uploading image', error: e);
       AppSnackBar.error(context, 'Failed to upload ${widget.type}.');
     } finally {
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
   }
 
@@ -126,7 +142,10 @@ class _UploadScreenState extends State<UploadScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primaryPurple,
         foregroundColor: AppColors.white,
-        title: Text('${widget.type} Upload', style: const TextStyle(fontSize: 18)),
+        title: Text(
+          '${widget.type} Upload',
+          style: const TextStyle(fontSize: 18),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -145,22 +164,22 @@ class _UploadScreenState extends State<UploadScreen> {
             const SizedBox(height: 16),
             _selectedImage != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      _selectedImage!,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  )
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _selectedImage!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                )
                 : DottedBorderBox(
-                    child: const Center(
-                      child: Text(
-                        "No image selected.",
-                        style: TextStyle(fontSize: 16, color: AppColors.grey),
-                      ),
+                  child: const Center(
+                    child: Text(
+                      "No image selected.",
+                      style: TextStyle(fontSize: 16, color: AppColors.grey),
                     ),
                   ),
+                ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -183,16 +202,17 @@ class _UploadScreenState extends State<UploadScreen> {
                     backgroundColor: AppColors.grey700,
                     foregroundColor: AppColors.white,
                   ),
-                  child: _isUploading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: AppColors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text("UPLOAD"),
+                  child:
+                      _isUploading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: AppColors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                          : const Text("UPLOAD"),
                 ),
               ],
             ),
@@ -265,11 +285,14 @@ class DottedBorderBox extends StatelessWidget {
       height: 200,
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.grey400, width: 1, style: BorderStyle.solid),
+        border: Border.all(
+          color: AppColors.grey400,
+          width: 1,
+          style: BorderStyle.solid,
+        ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: child,
     );
   }
 }
-
