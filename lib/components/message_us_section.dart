@@ -1,6 +1,6 @@
 import 'package:lockify/utils/colors.dart';
 import 'package:flutter/material.dart';
-
+import 'package:lockify/screens/settings/setting/whatsapp_help_screen.dart';
 
 class MessageUsSection extends StatelessWidget {
   const MessageUsSection({super.key});
@@ -14,7 +14,12 @@ class MessageUsSection extends StatelessWidget {
           color: Colors.blue,
           child: TextButton(
             onPressed: () {
-              // Open support chat or redirect
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WhatsAppHelpScreen(),
+                ),
+              );
             },
             child: const Text(
               "Message Us",

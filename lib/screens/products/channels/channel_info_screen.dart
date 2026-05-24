@@ -8,6 +8,7 @@ import 'package:lockify/components/widgets/member_tile.dart';
 import 'package:lockify/screens/products/participant_selection_screen.dart';
 import 'package:lockify/services/auth/auth_service.dart';
 import 'package:lockify/services/channel/channel_service.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lockify/utils/snackbar.dart';
 
@@ -313,8 +314,13 @@ class _ChannelInfoScreenState extends State<ChannelInfoScreen> {
                         icon: const Icon(Icons.share, size: 20),
                         label: const Text("Share", style: TextStyle(fontWeight: FontWeight.w600)),
                         onPressed: linkLoaded
-                            ? () {
-                                // Implement share logic
+                            ? () async {
+                                await SharePlus.instance.share(
+                                  ShareParams(
+                                    text: "Join ${widget.channelName} on Lockify: $channelLink",
+                                    subject: "${widget.channelName} channel",
+                                  ),
+                                );
                               }
                             : null,
                       ),

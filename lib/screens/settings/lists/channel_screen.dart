@@ -40,12 +40,16 @@ class ChannelScreen extends StatelessWidget {
           ),
           _buildListTile(
             context,
-            icon: Icons.lock_outline,
-            title: 'Purchased',
-            subtitle: 'List of all purchased locked messages',
+            icon: Icons.campaign_outlined,
+            title: 'Joined',
+            subtitle: 'List of all joined channels',
             onTap: () {
-              // Navigate to the Purchased Locked Messages screen (if implemented)
-              _showComingSoonDialog(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChannelSummaryScreen(createdOnly: false),
+                ),
+              );
             },
           ),
         ],
@@ -80,20 +84,5 @@ class ChannelScreen extends StatelessWidget {
     );
   }
 
-  void _showComingSoonDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Coming Soon"),
-        content: const Text("This feature is under development."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
 }
 

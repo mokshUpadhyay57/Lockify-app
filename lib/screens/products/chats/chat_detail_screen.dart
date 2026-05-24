@@ -23,7 +23,11 @@ class ChatDetailPage extends StatefulWidget {
   final String recieverPhone;
   final String recieverName;
 
-  const ChatDetailPage({super.key, required this.recieverPhone, required this.recieverName});
+  const ChatDetailPage({
+    super.key,
+    required this.recieverPhone,
+    required this.recieverName,
+  });
 
   @override
   State<ChatDetailPage> createState() => _ChatDetailPageState();
@@ -38,14 +42,35 @@ class _ChatDetailPageState extends State<ChatDetailPage> with ChatDateMixin {
   late final Future<String> currentUserPhone;
   late final Future<List<Contact>> _contactsFuture;
   bool _isUploading = false;
-  File? _pendingMedia; 
+  File? _pendingMedia;
   MediaType? _pendingType;
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     currentUserPhone = _chatService.getSenderPhone();
     _contactsFuture = _contactService.getCachedContacts(context);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _startSearch() {
+    setState(() => _isSearching = true);
+  }
+
+  void _stopSearch() {
+    _searchController.clear();
+    setState(() {
+      _isSearching = false;
+      _searchQuery = '';
+    });
   }
 
   Future<void> _handleMediaSend(File file, MediaType type) async {
@@ -82,61 +107,112 @@ class _ChatDetailPageState extends State<ChatDetailPage> with ChatDateMixin {
 
     return LockifyScaffold(
       backgroundColor: AppColors.backgroundGrey,
-      titleWidget: _ChatAppBarTitle(
-        receiverPhone: widget.recieverPhone,
-        chatService: _chatService,
-        contactsFuture: _contactsFuture,
-      ),
+      titleWidget: _isSearching
+          ? TextField(
+              controller: _searchController,
+              autofocus: true,
+              cursorColor: AppColors.white,
+              style: const TextStyle(color: AppColors.white),
+              decoration: InputDecoration(
+                hintText: 'Search messages',
+                hintStyle: TextStyle(color: AppColors.white.withOpacity(0.7)),
+                border: InputBorder.none,
+              ),
+              onChanged: (value) {
+                setState(() => _searchQuery = value.trim().toLowerCase());
+              },
+            )
+          : _ChatAppBarTitle(
+              receiverPhone: widget.recieverPhone,
+              chatService: _chatService,
+              contactsFuture: _contactsFuture,
+            ),
       actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          onSelected: (value) {
-            switch (value) {
-              case 'profile':
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-                break;
-              case 'search':
-                AppSnackBar.info(context, 'Search coming soon');
-                break;
-              case 'mute':
-                AppSnackBar.info(context, 'Notifications muted');
-                break;
-              case 'clear':
-                AppSnackBar.success(context, 'Chat cleared locally');
-                break;
-              case 'block':
-                AppSnackBar.error(context, 'User blocked');
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
+        if (_isSearching)
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: _stopSearch,
+          )
+        else
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            onSelected: (value) {
+              switch (value) {
+                case 'profile':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
+                  break;
+                case 'search':
+                  _startSearch();
+                  break;
+                case 'mute':
+                  AppSnackBar.info(context, 'Notifications muted');
+                  break;
+                case 'clear':
+                  AppSnackBar.success(context, 'Chat cleared locally');
+                  break;
+                case 'block':
+                  AppSnackBar.error(context, 'User blocked');
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
                 value: 'profile',
-                child: ListTile(dense: true, leading: Icon(Icons.person_outline), title: Text('View Profile'))),
-            const PopupMenuItem(
-                value: 'search', child: ListTile(dense: true, leading: Icon(Icons.search), title: Text('Search'))),
-            const PopupMenuItem(
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.person_outline),
+                  title: Text('View Profile'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'search',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.search),
+                  title: Text('Search'),
+                ),
+              ),
+              const PopupMenuItem(
                 value: 'mute',
                 child: ListTile(
-                    dense: true, leading: Icon(Icons.notifications_off_outlined), title: Text('Mute Notifications'))),
-            const PopupMenuItem(
+                  dense: true,
+                  leading: Icon(Icons.notifications_off_outlined),
+                  title: Text('Mute Notifications'),
+                ),
+              ),
+              const PopupMenuItem(
                 value: 'clear',
-                child: ListTile(dense: true, leading: Icon(Icons.delete_sweep_outlined), title: Text('Clear Chat'))),
-            const PopupMenuDivider(),
-            const PopupMenuItem(
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.delete_sweep_outlined),
+                  title: Text('Clear Chat'),
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
                 value: 'block',
                 child: ListTile(
-                    dense: true,
-                    leading: Icon(Icons.block, color: AppColors.errorRed),
-                    title: Text('Block User', style: TextStyle(color: AppColors.errorRed)))),
-          ],
-        ),
+                  dense: true,
+                  leading: Icon(Icons.block, color: AppColors.errorRed),
+                  title: Text(
+                    'Block User',
+                    style: TextStyle(color: AppColors.errorRed),
+                  ),
+                ),
+              ),
+            ],
+          ),
       ],
       body: FutureBuilder<String>(
         future: currentUserPhone,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           final userPhone = snapshot.data ?? '';
           final normalizedUserPhone = _chatService.normalizePhone(userPhone);
 
@@ -147,12 +223,25 @@ class _ChatDetailPageState extends State<ChatDetailPage> with ChatDateMixin {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _chatService.getMessages(normalizedUserPhone, widget.recieverPhone),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
                     final docs = snapshot.data?.docs ?? [];
                     if (docs.isEmpty && !_isUploading) return _buildEmptyState();
+                    final visibleDocs = _searchQuery.isEmpty
+                        ? docs
+                        : docs.where((doc) {
+                            final data = doc.data() as Map<String, dynamic>?;
+                            final message = (data?['message'] ?? '').toString().toLowerCase();
+                            return message.contains(_searchQuery);
+                          }).toList();
+
+                    if (visibleDocs.isEmpty && _searchQuery.isNotEmpty) {
+                      return _buildNoSearchResults();
+                    }
 
                     final Map<String, List<QueryDocumentSnapshot>> groupedMessages = {};
-                    for (var doc in docs) {
+                    for (var doc in visibleDocs) {
                       final data = doc.data() as Map<String, dynamic>?;
                       if (data == null) continue;
                       final timestamp = data['timestamp'];
@@ -222,20 +311,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> with ChatDateMixin {
               ChatInput(
                 primaryColor: primaryColor,
                 onSendText: (message) async {
-                  await _chatService.sendMessage(context, widget.recieverPhone, message,
-                      receiverName: widget.recieverName);
+                  await _chatService.sendMessage(
+                    context,
+                    widget.recieverPhone,
+                    message,
+                    receiverName: widget.recieverName,
+                  );
                 },
                 onSendMedia: (file, type) async {
                   await _handleMediaSend(file, type);
                 },
                 onAddPoll: () {
                   Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => AddPollScreen(
-                                receiverPhone: widget.recieverPhone,
-                                receiverName: widget.recieverName,
-                              )));
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddPollScreen(
+                        receiverPhone: widget.recieverPhone,
+                        receiverName: widget.recieverName,
+                      ),
+                    ),
+                  );
                 },
               ),
             ],
@@ -250,9 +345,29 @@ class _ChatDetailPageState extends State<ChatDetailPage> with ChatDateMixin {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.chat_bubble_outline, size: 64, color: AppColors.grey300),
+          const Icon(
+            Icons.chat_bubble_outline,
+            size: 64,
+            color: AppColors.grey300,
+          ),
           const SizedBox(height: 16),
           const Text('No messages yet', style: TextStyle(color: AppColors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoSearchResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.search_off, size: 64, color: AppColors.grey300),
+          const SizedBox(height: 16),
+          Text(
+            'No results for "$_searchQuery"',
+            style: const TextStyle(color: AppColors.grey),
+          ),
         ],
       ),
     );

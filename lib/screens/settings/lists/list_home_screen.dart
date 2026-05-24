@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:lockify/components/widgets/lockify_scaffold.dart';
 import 'package:lockify/screens/settings/lists/list_options.dart';
-import 'dart:ui';
- // Import for ImageFilter
 
 class ListHomeScreen extends StatelessWidget {
   const ListHomeScreen({super.key});

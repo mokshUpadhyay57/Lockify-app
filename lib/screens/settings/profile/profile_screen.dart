@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lockify/components/widgets/lockify_scaffold.dart';
 import 'package:lockify/components/widgets/profile_header.dart';
+import 'package:lockify/screens/products/channels/channel_chat_screen.dart';
 import 'package:lockify/screens/settings/setting/profile_update_screen.dart';
 import 'package:lockify/services/auth/auth_service.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
-const ProfileScreen({super.key});
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -63,12 +64,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return ListView.builder(
           itemCount: channels.length,
           itemBuilder: (context, index) {
-            final channel = channels[index].data();
+            final channelDoc = channels[index];
+            final channel = channelDoc.data();
+            final channelName = channel['name']?.toString() ?? 'Channel';
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: InkWell(
                 onTap: () {
-                  // TODO: Add navigation or action if needed
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChannelDetailPage(
+                        channelId: channel['channelId']?.toString() ?? channelDoc.id,
+                        channelName: channelName,
+                        channelDesc: channel['description']?.toString() ?? '',
+                        channelImage: channel['imageUrl']?.toString() ?? '',
+                        isPaid: channel['isPaid'] == true || channel['isPaid'] == 'true',
+                        participants: channel['participantUids'] ?? [],
+                      ),
+                    ),
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -96,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            (channel['name'] ?? 'C').isNotEmpty ? channel['name'][0].toUpperCase() : '?',
+                            channelName.isNotEmpty ? channelName[0].toUpperCase() : '?',
                             style: const TextStyle(
                               color: AppColors.primaryPurple,
                               fontWeight: FontWeight.bold,
@@ -113,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              channel['name'] ?? '',
+                              channelName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,

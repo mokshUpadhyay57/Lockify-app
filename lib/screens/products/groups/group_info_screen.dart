@@ -10,6 +10,7 @@ import 'package:lockify/screens/products/participant_selection_screen.dart';
 import 'package:lockify/services/admin/admin_service.dart';
 import 'package:lockify/services/auth/auth_service.dart';
 import 'package:lockify/services/group/group_service.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GroupInfoScreen extends StatefulWidget {
@@ -317,8 +318,13 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                         icon: const Icon(Icons.share, size: 20),
                         label: const Text("Share", style: TextStyle(fontWeight: FontWeight.w600)),
                         onPressed: linkLoaded
-                            ? () {
-                                // Implement share logic
+                            ? () async {
+                                await SharePlus.instance.share(
+                                  ShareParams(
+                                    text: "Join ${widget.groupName} on Lockify: $groupLink",
+                                    subject: "${widget.groupName} group",
+                                  ),
+                                );
                               }
                             : null,
                       ),

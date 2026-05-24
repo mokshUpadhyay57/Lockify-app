@@ -1,5 +1,6 @@
 import 'package:lockify/utils/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:lockify/screens/products/purchase/purchase_screen.dart';
 import 'package:lockify/screens/settings/lists/locked_messages_summary_screen.dart';
 
 
@@ -44,8 +45,12 @@ class LockedMessagesPage extends StatelessWidget {
             title: 'Purchased',
             subtitle: 'List of all purchased locked messages',
             onTap: () {
-              // Navigate to the Purchased Locked Messages screen (if implemented)
-              _showComingSoonDialog(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PurchasePage(showAppBar: true),
+                ),
+              );
             },
           ),
         ],
@@ -80,20 +85,5 @@ class LockedMessagesPage extends StatelessWidget {
     );
   }
 
-  void _showComingSoonDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Coming Soon"),
-        content: const Text("This feature is under development."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
 }
 

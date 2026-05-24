@@ -11,7 +11,14 @@ class WhatsAppHelpScreen extends StatefulWidget {
 }
 
 class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
+  static const String _supportPhoneNumber = '918595238995';
   final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   void _sendToWhatsApp() async {
     String message = _controller.text.trim();
@@ -20,9 +27,8 @@ class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
       return;
     }
 
-    const String phoneNumber = '919876543210'; // Professional support placeholder (E.164 format)
     final Uri whatsappUrl = Uri.parse(
-      'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}',
+      'https://wa.me/$_supportPhoneNumber?text=${Uri.encodeComponent(message)}',
     );
 
     try {
@@ -30,10 +36,12 @@ class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
         await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
       } else {
         throw 'Could not launch WhatsApp';
-
       }
     } catch (e) {
-      AppSnackBar.error(context, 'Could not open WhatsApp. Please ensure it is installed.');
+      AppSnackBar.error(
+        context,
+        'Could not open WhatsApp. Please ensure it is installed.',
+      );
     }
   }
 
@@ -42,7 +50,10 @@ class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F4FA),
       appBar: AppBar(
-        title: const Text('Help & Support', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Help & Support',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.primaryPurple,
         foregroundColor: AppColors.white,
         elevation: 0,
@@ -54,7 +65,11 @@ class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
           children: [
             const Text(
               "How can we help?",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primaryPurple),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryPurple,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -93,7 +108,10 @@ class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(color: AppColors.primaryPurple, width: 2),
+                        borderSide: const BorderSide(
+                          color: AppColors.primaryPurple,
+                          width: 2,
+                        ),
                       ),
                       filled: true,
                       fillColor: AppColors.grey50,
@@ -107,7 +125,10 @@ class _WhatsAppHelpScreenState extends State<WhatsAppHelpScreen> {
                       icon: const Icon(Icons.chat, color: AppColors.white),
                       label: const Text(
                         'OPEN WHATSAPP',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryPurple,

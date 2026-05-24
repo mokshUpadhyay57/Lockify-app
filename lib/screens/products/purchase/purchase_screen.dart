@@ -6,7 +6,9 @@ import 'package:lockify/services/purchase_service.dart';
 import 'package:lockify/screens/products/locked_messages/locked_message_viewer_screen.dart';
 
 class PurchasePage extends StatefulWidget {
-  const PurchasePage({super.key});
+  final bool showAppBar;
+
+  const PurchasePage({super.key, this.showAppBar = false});
 
   @override
   State<PurchasePage> createState() => _PurchasePageState();
@@ -19,6 +21,13 @@ class _PurchasePageState extends State<PurchasePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.grey50,
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('Purchased Messages', style: TextStyle(fontSize: 18)),
+              backgroundColor: AppColors.primaryPurple,
+              foregroundColor: AppColors.white,
+            )
+          : null,
       body: Column(
         children: [
           // Banner

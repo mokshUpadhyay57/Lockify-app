@@ -40,12 +40,16 @@ class GroupScreen extends StatelessWidget {
           ),
           _buildListTile(
             context,
-            icon: Icons.lock_outline,
-            title: 'Purchased',
-            subtitle: 'List of all purchased locked messages',
+            icon: Icons.group_outlined,
+            title: 'Joined',
+            subtitle: 'List of all joined groups',
             onTap: () {
-              // Navigate to the Purchased Locked Messages screen (if implemented)
-              _showComingSoonDialog(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const GroupSummaryScreen(createdOnly: false),
+                ),
+              );
             },
           ),
         ],
@@ -80,20 +84,5 @@ class GroupScreen extends StatelessWidget {
     );
   }
 
-  void _showComingSoonDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Coming Soon"),
-        content: const Text("This feature is under development."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
