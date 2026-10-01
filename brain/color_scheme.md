@@ -6,6 +6,26 @@ It is formatted for easy integration into web projects (React, Next.js, HTML/CSS
 
 ---
 
+## 🎯 Quick Reference — Core Brand Colors (Top 5)
+
+A minimal, high-impact 5-color palette for rapid integration and brand consistency:
+
+| # | Role | Color Name | Hex Code | RGB | Usage |
+| :- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Primary Brand** | Lockify Purple | **`#9C27B0`** | `rgb(156, 39, 176)` | Logo, primary action buttons (*"Claim Content"*, *"Create Link"*), active navigation |
+| **2** | **Brand Shade** | Deep Purple | **`#7B1FA2`** | `rgb(123, 31, 162)` | Button hover states, headings, high-contrast titles |
+| **3** | **Brand Tint** | Soft Lavender | **`#F3E5F5`** | `rgb(243, 229, 245)` | Badge pills (*"Locked Link"*), subtle card highlights, hero section glow |
+| **4** | **Action Accent** | Unlock Green | **`#43A047`** | `rgb(67, 160, 71)` | *"Pay & Unlock"* button, price tags, payment success |
+| **5** | **Alert Accent** | Security Red | **`#F44336`** | `rgb(244, 67, 54)` | Padlock icons, *"Content Locked"* notices, expiry timer |
+
+**Supporting Neutrals:**
+- **Card / Surface White**: `#FFFFFF`
+- **Page Background**: `#F5F5F5`
+- **Main Text**: `#212121` (Dark Charcoal)
+- **Subtle Border**: `#E0E0E0`
+
+---
+
 ## 🎯 1. Primary Brand Colors (Purple Spectrum)
 
 The signature Lockify purple represents security, premium monetization, and brand identity.

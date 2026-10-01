@@ -1,0 +1,119 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // --- Helper Functions ---
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if user has purchased a specific locked message
+    function hasPurchased(messageId) {
+      return isAuthenticated()
+        && firestore.exists(/databases/(default)/documents/purchases/$(request.auth.uid + '_' + messageId));
+    }
+
+    // Check if user is the creator of a locked message
+    function isLockedMessageCreator(messageId) {
+      return isAuthenticated()
+        && firestore.get(/databases/(default)/documents/lockedMessages/$(messageId)).data.createdBy == request.auth.uid;
+    }
+
+    // Check if user is participant in a chat room
+    function isRoomParticipant(roomId) {
+      let roomData = firestore.get(/databases/(default)/documents/rooms/$(roomId)).data;
+      return isAuthenticated()
+        && request.auth.uid in roomData.participantUids;
+    }
+
+    // Check if user is member of a group
+    function isGroupMember(groupId) {
+      return isAuthenticated()
+        && firestore.exists(/databases/(default)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    // Check if user is subscriber of a channel
+    function isChannelSubscriber(channelId) {
+      return isAuthenticated()
+        && firestore.exists(/databases/(default)/documents/channels/$(channelId)/subscribers/$(request.auth.uid));
+    }
+
+    // --- User Profile Images ---
+    match /users/{userId}/profile/{fileName} {
+      // Anyone authenticated can read profile images
+      allow read: if isAuthenticated();
+      // Only the owner can upload/update/delete their profile image
+      allow write: if isOwner(userId);
+    }
+
+    // --- Locked Messages Media (Protected Content) ---
+    match /lockedMessages/images/{messageId}/{fileName} {
+      // Creator can always access their own content
+      // Buyers can only access after purchase
+      allow read: if isLockedMessageCreator(messageId) || hasPurchased(messageId);
+      // Only authenticated users can upload (creator during creation)
+      allow create: if isAuthenticated();
+      // Only the creator can update/delete
+      allow update, delete: if isLockedMessageCreator(messageId);
+    }
+
+    match /lockedMessages/videos/{messageId}/{fileName} {
+      allow read: if isLockedMessageCreator(messageId) || hasPurchased(messageId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isLockedMessageCreator(messageId);
+    }
+
+    match /lockedMessages/documents/{messageId}/{fileName} {
+      allow read: if isLockedMessageCreator(messageId) || hasPurchased(messageId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isLockedMessageCreator(messageId);
+    }
+
+    // --- Chat Room Media ---
+    match /rooms/{roomId}/media/{fileName} {
+      // Only room participants can access
+      allow read: if isRoomParticipant(roomId);
+      allow write: if isRoomParticipant(roomId);
+    }
+
+    // --- Group Media ---
+    match /groups/{groupId}/media/{fileName} {
+      // Only group members can access
+      allow read: if isGroupMember(groupId);
+      allow write: if isGroupMember(groupId);
+    }
+
+    // --- Channel Media ---
+    match /channels/{channelId}/media/{fileName} {
+      // Only subscribers can read
+      allow read: if isChannelSubscriber(channelId);
+      // Only admins can write (check via Firestore)
+      allow write: if isChannelSubscriber(channelId);
+    }
+
+    // --- KYC Verification Documents ---
+    match /verifications/{userId}/{docType}/{fileName} {
+      // Only the owner and admin can read verification documents
+      allow read: if isOwner(userId);
+      // Only the owner can upload their verification documents
+      allow write: if isOwner(userId);
+    }
+
+    // --- Invoice/Receipts ---
+    match /invoices/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+
+    // --- Default Deny All ---
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

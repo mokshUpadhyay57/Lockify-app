@@ -2,6 +2,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { defineString } = require("firebase-functions/params");
 const axios = require("axios");
 const crypto = require("crypto");
+const logger = require("firebase-functions/logger");
 const { db, admin } = require("../config/firebase");
 
 const CF_APP_KEY = defineString("CF_APP_KEY");
@@ -19,11 +20,14 @@ function generateOrderId(lockedMessageId, buyerPhone) {
 }
 
 exports.createOrder = onRequest(async (req, res) => {
+  // Generate correlation ID for this request
+  const correlationId = `req-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 
   // ✅ CORS headers
   res.set("Access-Control-Allow-Origin", "https://lockify.co.in");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type");
+  res.set("X-Correlation-ID", correlationId);
 
   // ✅ Handle preflight immediately
   if (req.method === "OPTIONS") {
@@ -31,16 +35,21 @@ exports.createOrder = onRequest(async (req, res) => {
   }
 
     if (req.method !== "POST") {
+      logger.warn("Invalid method", { correlationId, method: req.method });
       return res.status(405).json({ error: "Method not allowed" });
     }
 
   try {
-    console.log("BODY:", req.body);
-    console.log("HEADERS:", req.headers);
+    logger.info("createOrder request received", {
+      correlationId,
+      body: req.body,
+      headers: req.headers
+    });
 
     const { lockedMessageId, buyerPhone, buyerId, returnUrl } = req.body;
 
-    console.log("Received createOrder request:", {
+    logger.info("Order details", {
+      correlationId,
       lockedMessageId,
       buyerPhone,
       buyerId,
@@ -54,6 +63,7 @@ exports.createOrder = onRequest(async (req, res) => {
       !(buyerPhone) ||
       !returnUrl
     ) {
+      logger.warn("Invalid input", { correlationId, lockedMessageId, buyerPhone, returnUrl });
       return res.status(400).json({ error: "Invalid input" });
     }
 
@@ -61,24 +71,28 @@ exports.createOrder = onRequest(async (req, res) => {
     try {
       parsedReturnUrl = new URL(returnUrl);
     } catch (_) {
+      logger.warn("Invalid returnUrl format", { correlationId, returnUrl });
       return res.status(400).json({ error: "Invalid returnUrl" });
     }
 
     const allowedDomains = ["lockify.co.in","localhost"];
     if (!allowedDomains.includes(parsedReturnUrl.hostname)) {
+      logger.warn("Unauthorized domain", { correlationId, domain: parsedReturnUrl.hostname });
       return res.status(400).json({ error: "Unauthorized domain" });
     }
 
     // Fetch message
     const msgSnap = await db.collection("lockedMessages").doc(lockedMessageId).get();
-    console.log("Message snapshot:", msgSnap.data());
+    logger.debug("Message snapshot fetched", { correlationId, exists: msgSnap.exists });
     if (!msgSnap.exists) {
+      logger.warn("Message not found", { correlationId, lockedMessageId });
       return res.status(404).json({ error: "Message not found" });
     }
 
     const { unlockPrice, createdBy } = msgSnap.data();
-    console.log("Unlock price from DB:", unlockPrice);
+    logger.info("Unlock price retrieved", { correlationId, unlockPrice });
     if (!unlockPrice || unlockPrice <= 0) {
+      logger.warn("Invalid amount", { correlationId, unlockPrice });
       return res.status(400).json({ error: "Invalid amount" });
     }
 
@@ -86,7 +100,7 @@ exports.createOrder = onRequest(async (req, res) => {
     const returnUri = new URL(parsedReturnUrl.toString());
     returnUri.searchParams.set("order_id", orderId);
 
-    console.log("Generated order: ", orderId);
+    logger.info("Order ID generated", { correlationId, orderId });
     const orderRef = db.collection("orders").doc(orderId);
 
     let existingOrder = null;
@@ -101,16 +115,23 @@ exports.createOrder = onRequest(async (req, res) => {
         buyerId: typeof buyerId === "string" && buyerId ? buyerId : null,
         creatorId: createdBy,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        correlationId,
       });
+      logger.info("Order document created", { correlationId, orderId });
     } catch (err) {
-      console.error("Order creation error:", err);
+      logger.error("Order creation error", { correlationId, error: err.message, code: err.code });
       if (err.code === 6 || err.code === "already-exists") {
-        console.log("Order already exists, checking status...");
+        logger.info("Order already exists, checking status", { correlationId, orderId });
         const snap = await orderRef.get();
         existingOrder = snap.data();
 
         // reuse session
         if (existingOrder.paymentSessionId) {
+          logger.info("Reusing existing payment session", {
+            correlationId,
+            orderId,
+            sessionId: existingOrder.paymentSessionId
+          });
           return res.status(200).json({
             orderId,
             paymentSessionId: existingOrder.paymentSessionId,
@@ -120,6 +141,7 @@ exports.createOrder = onRequest(async (req, res) => {
         // INIT lock handling
         const createdAt = existingOrder.createdAt?.toMillis?.() || 0;
         if (Date.now() - createdAt < 15000) {
+          logger.warn("Order still processing", { correlationId, orderId });
           return res.status(409).json({ error: "Order processing" });
         }
       } else {
@@ -128,7 +150,7 @@ exports.createOrder = onRequest(async (req, res) => {
     }
 
     const BASE_URL = CF_BASE_URL.value();
-    console.log("Cashfree base URL:", BASE_URL);
+    logger.debug("Cashfree API URL", { correlationId, baseUrl: BASE_URL });
     // Call Cashfree
     const cfResponse = await axios.post(
       `${BASE_URL}/orders`,
@@ -147,6 +169,7 @@ exports.createOrder = onRequest(async (req, res) => {
         order_tags: {
           lockedMessageId: lockedMessageId,
           buyerPhone: buyerPhone,
+          correlationId: correlationId,
         },
       },
       {
@@ -154,13 +177,18 @@ exports.createOrder = onRequest(async (req, res) => {
           "x-client-id": CF_APP_KEY.value(),
           "x-client-secret": CF_SECRET.value(),
           "x-api-version": "2025-01-01",
+          "x-request-id": correlationId,
           "Content-Type": "application/json",
         },
         timeout: 5000,
       },
     );
 
-    console.log("Cashfree response:", cfResponse.data);
+    logger.info("Cashfree order created", {
+      correlationId,
+      orderId,
+      sessionId: cfResponse.data.payment_session_id
+    });
 
     // Save session immediately
     await orderRef.set({
@@ -169,7 +197,11 @@ exports.createOrder = onRequest(async (req, res) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
-    console.log("Order created with session:", orderId, cfResponse.data.payment_session_id);
+    logger.info("Order finalized with payment session", {
+      correlationId,
+      orderId,
+      sessionId: cfResponse.data.payment_session_id
+    });
 
     return res.status(200).json({
       orderId,
@@ -177,10 +209,13 @@ exports.createOrder = onRequest(async (req, res) => {
     });
 
   } catch (err) {
-    console.error("CASHFREE ERROR:");
-    console.error("status:", err?.response?.status);
-    console.error("data:", err?.response?.data);
-    console.error("message:", err.message); 
+    logger.error("Cashfree API error", {
+      correlationId,
+      status: err?.response?.status,
+      data: err?.response?.data,
+      message: err.message,
+      stack: err.stack,
+    });
     return res.status(500).json({ error: "Internal error" });
   }
 });

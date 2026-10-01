@@ -1,6 +1,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { defineString } = require("firebase-functions/params");
 const crypto = require("crypto");
+const logger = require("firebase-functions/logger");
 
 const { finalizePaidOrder } = require("./finalizeOrder");
 
@@ -19,7 +20,7 @@ function verifyWebhookSignature(rawBody, timestamp, signature) {
 
   const secret = CF_SECRET.value();
   if (!secret) {
-    console.log("CF_SECRET missing");
+    logger.error("CF_SECRET missing for webhook verification");
     return false;
   }
 
@@ -36,7 +37,7 @@ function verifyWebhookSignature(rawBody, timestamp, signature) {
       Buffer.from(signature),
     );
   } catch (err) {
-    console.error("Signature comparison failed:", err);
+    logger.error("Signature comparison failed", { error: err.message });
     return false;
   }
 }
@@ -45,9 +46,12 @@ function verifyWebhookSignature(rawBody, timestamp, signature) {
 // Webhook Handler
 // -----------------------------
 exports.paymentSuccessWebhook = onRequest(async (req, res) => {
-  console.log("---- CASHFREE WEBHOOK RECEIVED ----");
+  const correlationId = `webhook-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+
+  logger.info("Cashfree webhook received", { correlationId, method: req.method });
 
   if (req.method !== "POST") {
+    logger.warn("Invalid method for webhook", { correlationId, method: req.method });
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -60,12 +64,12 @@ exports.paymentSuccessWebhook = onRequest(async (req, res) => {
 
     // ✅ STRICT validation (no bypass)
     if (!timestamp || !signature) {
-      console.log("Missing webhook headers");
+      logger.warn("Missing webhook signature headers", { correlationId });
       return res.status(400).json({ error: "Missing signature headers" });
     }
 
     if (!verifyWebhookSignature(rawBody, timestamp, signature)) {
-      console.log("Invalid webhook signature");
+      logger.error("Invalid webhook signature", { correlationId });
       return res.status(401).json({ error: "Invalid signature" });
     }
 
@@ -74,26 +78,27 @@ exports.paymentSuccessWebhook = onRequest(async (req, res) => {
     // -----------------------------
     const payload = req.body;
 
-    console.log("Event Type:", payload?.type);
+    logger.info("Webhook event type", { correlationId, eventType: payload?.type });
 
     const eventData = payload?.data;
-    console.log("Event Data:", eventData); // Debug log
     if (!eventData) {
+      logger.warn("Invalid payload: missing data", { correlationId });
       return res.status(400).json({ error: "Invalid payload: missing data" });
     }
 
     const payment = eventData?.payment || {};
     const order = eventData?.order;
-    console.log("Order:", order); // Debug log
     if (!order) {
+      logger.warn("Invalid payload: missing order", { correlationId });
       return res.status(400).json({ error: "Invalid payload: missing order" });
     }
 
     const orderStatus = payment?.payment_status;
-    console.log("Order Status:", orderStatus); // Debug log
-    console.log("Is Success Status:", isSuccessStatus(orderStatus)); // Debug log
+    logger.info("Payment status", { correlationId, orderStatus, isSuccess: isSuccessStatus(orderStatus) });
+
     // ✅ Only process success
     if (!isSuccessStatus(orderStatus)) {
+      logger.info("Non-success status ignored", { correlationId, orderStatus });
       return res.status(200).json({
         ignored: true,
         reason: `status=${orderStatus || "UNKNOWN"}`,
@@ -117,7 +122,8 @@ exports.paymentSuccessWebhook = onRequest(async (req, res) => {
     // Validate required fields
     // -----------------------------
     if (!orderId) {
-      console.error("Missing required fields", {
+      logger.error("Missing required fields in webhook", {
+        correlationId,
         orderId,
         lockedMessageId,
         buyerPhone,

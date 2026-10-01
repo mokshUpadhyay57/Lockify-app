@@ -101,14 +101,10 @@ lib/
 
 ## 📈 Roadmap & Scaling
 
-Lockify is designed for infinite scale. Future milestones include:
-
-- **Subcollection Membership:** Transitioning to subcollections for handling 100k+ group members.
-- **Atomic Transactions:** Implementing `runTransaction` for critical wallet and payout operations.
-- **Push Notifications:** Cloud-triggered engagement alerts for new messages and sales.
+See [roadmap](brain/roadmap.md) for current implementation status and planned work.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+No license file is currently present in this repository. Add one before distributing the project under a specific license.
