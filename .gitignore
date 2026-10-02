@@ -58,12 +58,6 @@ npm-debug.log*
 .env.*
 *.secret
 
-# Documentation & Gemini Context
-prd.md
-trd.md
-gemini.md
-GEMINI.md
-
 # macOS
 .DS_Store
 .AppleDouble
