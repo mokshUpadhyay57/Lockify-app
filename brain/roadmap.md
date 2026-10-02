@@ -12,7 +12,7 @@ Goal: establish a safe baseline before adding more features.
 - [x] Replace development Storage rules with production rules.
 - [x] Review Cloud Function permissions.
 - [x] Confirm Cashfree secrets are server-side.
-- [ ] Establish emulator/testing strategy.
+- [x] Establish emulator/testing strategy.
 - [x] Add structured logging/correlation IDs.
 - [x] Define canonical Firestore collection names.
 - [x] Document environment configuration.

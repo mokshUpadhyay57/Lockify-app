@@ -6,7 +6,8 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "mocha functions/tests/**/*.test.js"
   },
   "engines": {
     "node": "22"
@@ -18,7 +19,10 @@
     "firebase-functions": "^6.0.1"
   },
   "devDependencies": {
-    "firebase-functions-test": "^3.1.0"
+    "chai": "^6.3.0",
+    "firebase-functions-test": "^3.1.0",
+    "mocha": "^12.0.3",
+    "sinon": "^22.1.0"
   },
   "private": true
 }
