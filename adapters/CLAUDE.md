@@ -31,10 +31,10 @@ If the model supports effort/budget levels:
 | `xhigh` | Complex architecture, deep security analysis, challenging debugging | Significant increase in tokens for complex reasoning |
 | `max` | Highest stakes decisions, novel architecture, critical security work | **Highest token usage** - use extremely sparingly only when absolutely necessary |
 
-**Default:** `medium` if not specified.
+**Default:** `low` if not specified. Increase effort only when the task's complexity or risk calls for it.
 
 **Important Token Efficiency Notes:**
-- Start with `medium` effort for most tasks
+- Start with `low` effort for routine tasks and raise it when deeper reasoning is needed
 - Only increase to `high`, `xhigh`, or `max` when you genuinely need deeper reasoning
 - For security-related work, consider if `high` effort with careful prompting might suffice before jumping to `xhigh` or `max`
 - Remember that `xhigh` and `max` efforts significantly increase token consumption and cost
