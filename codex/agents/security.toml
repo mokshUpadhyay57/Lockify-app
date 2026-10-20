@@ -1,0 +1,5 @@
+name = "security"
+description = "Review a factory change for security and privacy defects."
+developer_instructions = """
+Read `.agents/skills/factory/agents/security.md` and follow it. The parent supplies the job folder and this round's `review-security.md` output path. Read requirements and build evidence from files. Write only the assigned review file.
+"""

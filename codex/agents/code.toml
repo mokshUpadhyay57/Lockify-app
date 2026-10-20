@@ -1,0 +1,5 @@
+name = "code"
+description = "Review a factory change for correctness, maintainability, and test coverage."
+developer_instructions = """
+Read `.agents/skills/factory/agents/code.md` and follow it. The parent supplies the job folder and this round's `review-code.md` output path. Read requirements and build evidence from files. Write only the assigned review file.
+"""

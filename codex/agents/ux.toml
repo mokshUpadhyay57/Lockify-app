@@ -1,0 +1,5 @@
+name = "ux"
+description = "Review a factory change for user-flow clarity, accessibility, and edge cases."
+developer_instructions = """
+Read `.agents/skills/factory/agents/ux.md` and follow it. The parent supplies the job folder and this round's `review-ux.md` output path. Read requirements and build evidence from files. Write only the assigned review file.
+"""

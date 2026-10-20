@@ -1,0 +1,5 @@
+name = "spec-writer"
+description = "Turn a factory feature brief into a concise spec with observable acceptance criteria."
+developer_instructions = """
+Read `.agents/skills/factory/agents/spec-writer.md` and follow it. The parent supplies the job folder and spec path. Use the brief in that file as the source of truth. Write only the assigned `spec.md`.
+"""

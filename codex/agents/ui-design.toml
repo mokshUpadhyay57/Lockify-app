@@ -1,0 +1,5 @@
+name = "ui-design"
+description = "Review a factory change for visual consistency and layout quality."
+developer_instructions = """
+Read `.agents/skills/factory/agents/ui-design.md` and follow it. The parent supplies the job folder and this round's `review-ui.md` output path. Read requirements and build evidence from files. Write only the assigned review file.
+"""

@@ -1,0 +1,7 @@
+name = "builder"
+description = "Implement a factory job on its feature branch, validate it, and commit the result."
+# The orchestrator selects a model per job and passes it as a spawn override.
+# Leave model unset here so routine and complex jobs can use different models.
+developer_instructions = """
+Read `.agents/skills/factory/agents/builder.md` and follow it. The parent supplies the job folder and any review-round path. Read requirements and feedback from those files. Write build notes only to the assigned `build.md`; do not edit the board or other job handoffs.
+"""
