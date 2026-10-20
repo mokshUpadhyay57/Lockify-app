@@ -1,0 +1,4 @@
+﻿VERDICT: CHANGES
+
+- `lib/screens/settings/earning/withdrawal_history_screen.dart:147-187, 240-271`: The overview amount and three summary cards stay in a fixed horizontal layout. On narrow phones, the inner width per summary card is about 76 px before its 24 px horizontal padding, leaving roughly 52 px for values; formatted rupee amounts such as `₹1000000` cannot fit at the fixed 16 px font, and `Pending requests` must wrap in the same narrow card. Make the summary responsive (for example, wrap into fewer columns at narrow widths) or scale/wrap values safely. The overview's 30 px amount also has no width handling. This leaves the narrow-layout issue unresolved on the history screen.
+- Loading and wallet error states are now present on both screens, and the earnings header amount scales down. The available/pending/on-hold balance labels distinguish the amounts, with `Pending requests` distinguishing the count; no further issue found there.

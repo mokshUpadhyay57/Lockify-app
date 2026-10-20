@@ -1,0 +1,4 @@
+﻿VERDICT: CHANGES
+
+- `lib/screens/settings/earning/earning_home_screen.dart:120-141,185-192`: An accepted callable response may have `status: pending` while the payout provider is still confirming the transfer, but the follow-up dialog is titled “Withdrawal Successful.” Change the title/copy to confirm that the request was submitted and is awaiting processing; reserve success language for a completed payout. Otherwise users can reasonably believe funds have arrived while history still shows pending.
+- `lib/screens/settings/earning/earning_home_screen.dart:587-607`: The beneficiary stream does not distinguish loading/error from a missing document. With a read/network error, it shows “ADD BANK DETAILS”; submitting then can return `configured: true` from the server without changing the existing beneficiary, while the form reports successful configuration. Render explicit loading and lookup-error states, and only offer setup when the lookup confirms no beneficiary.

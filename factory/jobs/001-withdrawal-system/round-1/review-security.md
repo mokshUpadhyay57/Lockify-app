@@ -1,0 +1,3 @@
+VERDICT: CHANGES
+
+- `functions/index.js`, `getAuthToken()`: `console.log("Cashfree /authorize response:", response.data)` logs the full authorization response, including the bearer token. The new `addBeneficiary` and `requestWithdrawal` flows call this helper, so payout credentials can be recovered from Cloud Function logs. Remove the response-body log and ensure no token or credential values are logged.

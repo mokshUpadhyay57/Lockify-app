@@ -1,0 +1,3 @@
+ESCALATE
+
+Round five still has unresolved security and UX findings, so the withdrawal system is not ready to merge. Cashfree beneficiary IDs are derived by stripping and truncating UIDs, allowing distinct users to collide and potentially target the wrong provider-side beneficiary. Replace this with a collision-resistant identifier and add regression coverage proving distinct UIDs map to distinct IDs. Separately, a wallet stream error replaces withdrawal history without a retry or recovery path; make the balance error recoverable or keep history visible. Security and UX must pass a subsequent review before merge. UI design and code passed round five.

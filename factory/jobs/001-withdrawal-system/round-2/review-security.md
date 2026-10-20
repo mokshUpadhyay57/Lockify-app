@@ -1,0 +1,7 @@
+VERDICT: PASS
+
+- `functions/index.js` no longer logs the Cashfree `/authorize` response or token. Provider errors are logged without request headers or bank account details; public callable errors use generic messages.
+- `addBeneficiary` and `requestWithdrawal` derive the user ID from `context.auth`, require verified status, and use the beneficiary document keyed by that UID. The withdrawal callable accepts only amount and a constrained request ID; the client cannot supply a beneficiary ID or payout credentials.
+- Withdrawal creation checks the ?100 minimum, available balance, configured beneficiary, and rate limit inside a Firestore transaction that creates the pending history/transaction records and reserves wallet funds atomically. Request IDs deduplicate retries. `finishWithdrawal` settles only pending records transactionally, and the webhook verifies an HMAC over the raw body before resolving the stored transfer ID.
+- `firestore.rules` allows owners to read their own wallet, beneficiary metadata, and withdrawal history, while denying client writes to wallet balances, beneficiary documents, withdrawals, and wallet transactions. User updates cannot change `isVerified`.
+- Round 1's security finding is resolved: the authorization response/token log is absent in the current `functions/index.js`.

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lockify · Software factory</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172322;
+      --muted: #64716d;
+      --paper: #f4f6f2;
+      --card: #fff;
+      --line: #dfe5de;
+      --green: #176a51;
+      --mint: #e6f3eb;
+      --amber: #9b5a08;
+      --red: #a43b34;
+      --shadow: 0 12px 30px rgb(31 49 42 / 7%);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); }
+    button { font: inherit; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px clamp(20px, 4vw, 56px); color: #f3f7f2; background: #152c27; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+    .mark { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #577368; border-radius: 11px; color: #b5e3c8; font-size: 17px; }
+    .live { display: flex; align-items: center; gap: 8px; color: #c5d5cd; font-size: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #7ddd9d; box-shadow: 0 0 0 4px rgb(125 221 157 / 13%); }
+    .dot.offline { background: #ffbf69; box-shadow: 0 0 0 4px rgb(255 191 105 / 14%); }
+    main { max-width: 1500px; margin: 0 auto; padding: 36px clamp(20px, 4vw, 56px) 64px; }
+    .intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 27px; }
+    .eyebrow { margin: 0 0 6px; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(27px, 3.4vw, 39px); line-height: 1.1; letter-spacing: -.045em; }
+    .subtitle { max-width: 570px; margin: 9px 0 0; color: var(--muted); }
+    .stats { display: flex; gap: 10px; }
+    .stat { min-width: 88px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 14px; background: rgb(255 255 255 / 68%); }
+    .stat b { display: block; font-size: 21px; line-height: 1.2; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    .pipeline { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding: 15px 17px; border: 1px solid #dbe3dc; border-radius: 16px; background: #eaf0e9; scrollbar-width: thin; }
+    .step { display: flex; flex: 1 0 auto; align-items: center; justify-content: center; gap: 8px; min-width: max-content; color: #384942; font-size: 12px; font-weight: 650; }
+    .step-num { display: grid; width: 23px; height: 23px; place-items: center; border-radius: 8px; background: white; color: var(--green); font-size: 11px; }
+    .arrow { color: #9aa9a0; }
+    .review-branch { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px dashed #bccbc1; border-radius: 9px; background: #f7faf6; color: #41534a; font-size: 11px; }
+    .loop-note { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; padding: 10px 14px; border: 1px solid #dbe3dc; border-radius: 12px; background: #f9fbf8; color: #58665e; font-size: 11px; }
+    .loop-note strong { color: #34463b; }
+    .loop-note .outcome { margin-left: auto; color: var(--green); font-weight: 700; }
+    .loop-note .escalate { color: var(--amber); font-weight: 700; }
+    .review-branch span { color: #8ca095; }
+    .board-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 31px 0 13px; }
+    h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .board-hint { color: var(--muted); font-size: 12px; }
+    .board { display: grid; grid-template-columns: repeat(7, minmax(205px, 1fr)); gap: 11px; overflow-x: auto; padding: 2px 1px 15px; scrollbar-color: #bac7bd transparent; }
+    .lane { min-height: 190px; overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: #edf1ec; }
+    .lane-head { display: flex; align-items: center; justify-content: space-between; min-height: 47px; padding: 10px 12px; border-bottom: 1px solid var(--line); color: #37463f; font-size: 12px; font-weight: 750; }
+    .count { display: grid; min-width: 22px; height: 22px; padding: 0 6px; place-items: center; border-radius: 8px; background: white; color: #617169; font-size: 11px; }
+    .lane-body { display: grid; align-content: start; gap: 9px; min-height: 137px; padding: 9px; }
+    .empty-lane { display: grid; min-height: 110px; place-items: center; color: #9aa59e; font-size: 11px; }
+    .job { width: 100%; padding: 12px; border: 1px solid #e1e7e1; border-radius: 12px; background: var(--card); color: var(--ink); text-align: left; cursor: pointer; box-shadow: 0 3px 8px rgb(28 45 38 / 3%); transition: border-color .15s, transform .15s, box-shadow .15s; }
+    .job:hover, .job:focus-visible { transform: translateY(-1px); border-color: #8bb6a1; outline: none; box-shadow: 0 7px 16px rgb(28 45 38 / 9%); }
+    .job.needs-human { border-color: #eccb9f; background: #fffaf2; }
+    .job-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+    .job-id { color: var(--muted); font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .runtime-tag { padding: 2px 6px; border-radius: 6px; background: #edf3ef; color: #53675b; font-size: 9px; white-space: nowrap; }
+    .round-tag { padding: 2px 6px; border-radius: 6px; background: #f0f3ef; color: #596960; font-size: 10px; white-space: nowrap; }
+    .job-title { display: block; margin: 5px 0 7px; font-size: 13px; font-weight: 750; line-height: 1.35; }
+    .branch { overflow: hidden; color: #728078; font: 10px ui-monospace, SFMono-Regular, Consolas, monospace; text-overflow: ellipsis; white-space: nowrap; }
+    .review-round { margin-top: 10px; padding-top: 8px; border-top: 1px solid #edf0ed; }
+    .round-label { display: block; margin-bottom: 5px; color: #738078; font-size: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chip { padding: 2px 5px; border: 1px solid #e3e8e3; border-radius: 6px; background: #f7f9f6; color: #647169; font-size: 9px; }
+    .chip.pass { border-color: #cce6d4; background: #edf8f0; color: #277046; }
+    .chip.changes { border-color: #f0cfcb; background: #fff1ef; color: var(--red); }
+    .chip.pending { color: #89938c; }
+    .chip.skip { color: #a3aaa5; background: #f4f5f4; }
+    .job.needs-human .round-tag { background: #fff0d8; color: var(--amber); }
+    .detail { display: none; margin-top: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: white; box-shadow: var(--shadow); }
+    .detail.open { display: block; }
+    .detail-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding: 19px 21px; border-bottom: 1px solid var(--line); }
+    .detail-head h2 { margin-top: 3px; font-size: 19px; }
+    .detail-head p { margin: 3px 0 0; color: var(--muted); font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .close { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: #526158; font-size: 18px; cursor: pointer; }
+    .files { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; padding: 16px; }
+    .file { min-width: 0; overflow: hidden; border: 1px solid #e8ece7; border-radius: 11px; background: #fbfcfa; }
+    .file h3 { margin: 0; padding: 9px 11px; border-bottom: 1px solid #e8ece7; color: #59675e; font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .file pre { max-height: 310px; overflow: auto; margin: 0; padding: 12px; color: #39463f; font: 11px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .empty-board { grid-column: 1 / -1; margin: 0; padding: 22px; border: 1px dashed #cfd9d0; border-radius: 12px; color: #75827a; text-align: center; }
+    .footer { margin-top: 19px; color: #7b8780; font-size: 11px; }
+    .footer code { padding: 2px 5px; border-radius: 5px; background: #e8ede7; color: #415147; }
+    @media (max-width: 720px) {
+      .intro { align-items: start; flex-direction: column; }
+      .stats { width: 100%; }
+      .stat { flex: 1; }
+      .board-head { align-items: start; flex-direction: column; gap: 3px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">⌘</span> LOCKIFY <span style="color:#8da69a;font-weight:500">/ software factory</span></div>
+    <div class="live"><span id="live-dot" class="dot"></span><span id="live-label">Connecting to board</span></div>
+  </header>
+  <main>
+    <section class="intro">
+      <div>
+        <p class="eyebrow">One feature · one clear path</p>
+        <h1>From idea to merge.</h1>
+        <p class="subtitle">A small, file-driven factory. Specialists build and review; one orchestrator keeps the work moving and the board in sync.</p>
+      </div>
+      <div class="stats" aria-label="Job counts">
+        <div class="stat"><b id="active-count">0</b><span>active jobs</span></div>
+        <div class="stat"><b id="review-count">0</b><span>in review</span></div>
+        <div class="stat"><b id="human-count">0</b><span>need a person</span></div>
+      </div>
+    </section>
+
+    <section class="pipeline" aria-label="Factory workflow">
+      <div class="step"><span class="step-num">1</span>Feature</div><span class="arrow">→</span>
+      <div class="step"><span class="step-num">2</span>Spec writer</div><span class="arrow">→</span>
+      <div class="step"><span class="step-num">3</span>Builder</div><span class="arrow">→</span>
+      <div class="step"><span class="step-num">4</span><span class="review-branch">Security <span>│</span> UX <span>│</span> UI design <span>│</span> Code</span></div><span class="arrow">→</span>
+      <div class="step"><span class="step-num">5</span>Approver</div><span class="arrow">→</span>
+      <div class="step"><span class="step-num">6</span>Merge / human</div>
+    </section>
+    <div class="loop-note"><span><strong>WAIT FOR ALL</strong> four review files before the builder resumes</span><span>Any CHANGES ↶ builder · up to 2 rounds</span><span class="outcome">APPROVE → merge to main</span><span class="escalate">ESCALATE → needs-human · /factory approve · $factory approve</span></div>
+    <p class="board-hint" style="margin:8px 2px 0">Claude Code uses the configured Opus/Sonnet roles; Codex agents inherit the session model unless configured. Both share the same job files and board.</p>
+
+    <div class="board-head"><h2>Factory board</h2><span class="board-hint">Select any card to inspect its spec, build notes, reviews, and decision.</span></div>
+    <section id="board" class="board" aria-live="polite"></section>
+    <section id="detail" class="detail" aria-label="Job files">
+      <div class="detail-head"><div><span id="detail-id" class="eyebrow"></span><h2 id="detail-title"></h2><p id="detail-branch"></p></div><button id="close-detail" class="close" aria-label="Close job details">×</button></div>
+      <div id="files" class="files"></div>
+    </section>
+    <p class="footer">Live board from <code>board.json</code> · Serve this folder with <code>python3 -m http.server</code> to load job files.</p>
+  </main>
+  <script>
+    const stages = [
+      ["feature", "Feature"], ["spec", "Spec"], ["build", "Build"],
+      ["review", "Review"], ["approval", "Approval"],
+      ["needs-human", "Needs human"], ["merged", "Merged"]
+    ];
+    const reviewers = [["security", "SEC"], ["ux", "UX"], ["ui-design", "UI"], ["code", "CODE"]];
+    const board = document.querySelector("#board");
+    const detail = document.querySelector("#detail");
+    let jobs = [];
+    let selectedId = null;
+    let refreshing = false;
+
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[char]));
+    }
+
+    function reviewRows(rounds = []) {
+      return rounds.map(round => `<div class="review-round"><span class="round-label">Round ${esc(round.round)}</span><div class="chips">${reviewers.map(([key, label]) => {
+        const verdict = round.reviews?.[key] || "pending";
+        const style = verdict === "PASS" ? "pass" : verdict === "CHANGES" ? "changes" : verdict === "SKIP" ? "skip" : "pending";
+        return `<span class="chip ${style}">${label} · ${esc(verdict)}</span>`;
+      }).join("")}</div></div>`).join("");
+    }
+
+    function render() {
+      const active = jobs.filter(job => job.stage !== "merged");
+      document.querySelector("#active-count").textContent = active.length;
+      document.querySelector("#review-count").textContent = jobs.filter(job => job.stage === "review").length;
+      document.querySelector("#human-count").textContent = jobs.filter(job => job.stage === "needs-human").length;
+      board.innerHTML = stages.map(([key, label]) => {
+        const laneJobs = jobs.filter(job => job.stage === key);
+        return `<section class="lane"><div class="lane-head"><span>${label}</span><span class="count">${laneJobs.length}</span></div><div class="lane-body">${laneJobs.length ? laneJobs.map(job => `
+          <button class="job ${job.stage === "needs-human" ? "needs-human" : ""}" data-job="${esc(job.id)}" aria-label="Open ${esc(job.id)}: ${esc(job.feature)}">
+            <span class="job-top"><span class="job-id">${esc(job.id)}</span><span class="runtime-tag">${esc(job.runtime || "factory")}</span><span class="round-tag">${job.stage === "needs-human" ? "Needs you" : job.round ? `Round ${esc(job.round)}` : label}</span></span>
+            <span class="job-title">${esc(job.feature)}</span><span class="branch">${esc(job.branch || "branch pending")}</span>${reviewRows(job.rounds)}
+          </button>`).join("") : `<div class="empty-lane">No jobs</div>`}</div></section>`;
+      }).join("");
+      if (!jobs.length) board.insertAdjacentHTML("beforeend", `<p class="empty-board">No jobs yet. Run <strong>/factory &lt;feature&gt;</strong> in Claude Code or <strong>$factory &lt;feature&gt;</strong> in Codex, or add an item to <strong>backlog.md</strong>.</p>`);
+      board.querySelectorAll("[data-job]").forEach(card => card.addEventListener("click", () => openJob(card.dataset.job)));
+      if (selectedId && detail.classList.contains("open")) {
+        const selected = jobs.find(job => job.id === selectedId);
+        if (selected) loadJobFiles(selected);
+        else closeDetail();
+      }
+    }
+
+    async function fileCard(job, path) {
+      const response = await fetch(`jobs/${encodeURIComponent(job.id)}/${path}`, { cache: "no-store" }).catch(() => null);
+      const contents = response?.ok ? await response.text() : "Not written yet.";
+      return `<article class="file"><h3>${esc(path)}</h3><pre>${esc(contents)}</pre></article>`;
+    }
+
+    async function loadJobFiles(job) {
+      document.querySelector("#detail-id").textContent = job.id;
+      document.querySelector("#detail-title").textContent = job.feature;
+      document.querySelector("#detail-branch").textContent = job.branch || "branch pending";
+      const paths = ["spec.md", "build.md"];
+      for (const round of job.rounds || []) {
+        if (round.reviews?.security !== "SKIP") paths.push(`round-${round.round}/review-security.md`);
+        if (round.reviews?.ux !== "SKIP") paths.push(`round-${round.round}/review-ux.md`);
+        if (round.reviews?.["ui-design"] !== "SKIP") paths.push(`round-${round.round}/review-ui.md`);
+        if (round.reviews?.code !== "SKIP") paths.push(`round-${round.round}/review-code.md`);
+      }
+      paths.push("decision.md");
+      const cards = await Promise.all(paths.map(path => fileCard(job, path)));
+      if (selectedId === job.id) document.querySelector("#files").innerHTML = cards.join("");
+    }
+
+    function openJob(id) {
+      const job = jobs.find(item => item.id === id);
+      if (!job) return;
+      selectedId = id;
+      detail.classList.add("open");
+      loadJobFiles(job);
+      detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function closeDetail() {
+      selectedId = null;
+      detail.classList.remove("open");
+    }
+
+    document.querySelector("#close-detail").addEventListener("click", closeDetail);
+
+    async function refresh() {
+      if (refreshing) return;
+      refreshing = true;
+      try {
+        const response = await fetch(`board.json?t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error("board unavailable");
+        const data = await response.json();
+        jobs = Array.isArray(data.jobs) ? data.jobs : [];
+        document.querySelector("#live-dot").classList.remove("offline");
+        document.querySelector("#live-label").textContent = "Live · refreshes every 3s";
+        render();
+      } catch {
+        document.querySelector("#live-dot").classList.add("offline");
+        document.querySelector("#live-label").textContent = "Board unavailable · start local server";
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
+</body>
+</html>

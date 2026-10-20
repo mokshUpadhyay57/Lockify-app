@@ -1,0 +1,59 @@
+﻿{
+    "jobs":  [
+                 {
+                     "id":  "001-withdrawal-system",
+                     "feature":  "Add withdrawal system",
+                     "branch":  "factory/001-withdrawal-system",
+                     "runtime":  "codex",
+                     "stage":  "needs-human",
+                     "round":  5,
+                     "rounds":  [
+                                    {
+                                        "round":  1,
+                                        "reviews":  {
+                                                        "security":  "CHANGES",
+                                                        "ux":  "CHANGES",
+                                                        "ui-design":  "CHANGES",
+                                                        "code":  "CHANGES"
+                                                    }
+                                    },
+                                    {
+                                        "round":  2,
+                                        "reviews":  {
+                                                        "security":  "PASS",
+                                                        "ux":  "CHANGES",
+                                                        "ui-design":  "CHANGES",
+                                                        "code":  "CHANGES"
+                                                    }
+                                    },
+                                    {
+                                        "round":  3,
+                                        "reviews":  {
+                                                        "security":  "CHANGES",
+                                                        "ux":  "CHANGES",
+                                                        "ui-design":  "CHANGES",
+                                                        "code":  "CHANGES"
+                                                    }
+                                    },
+                                    {
+                                        "round":  4,
+                                        "reviews":  {
+                                                        "security":  "PASS",
+                                                        "ux":  "CHANGES",
+                                                        "ui-design":  "CHANGES",
+                                                        "code":  "PASS"
+                                                    }
+                                    },
+                                    {
+                                        "round":  5,
+                                        "reviews":  {
+                                                        "security":  "CHANGES",
+                                                        "ux":  "CHANGES",
+                                                        "ui-design":  "PASS",
+                                                        "code":  "PASS"
+                                                    }
+                                    }
+                                ]
+                 }
+             ]
+}
