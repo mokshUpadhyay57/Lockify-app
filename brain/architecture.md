@@ -362,3 +362,33 @@ Do not infer a fixed MAU limit directly from a Firebase quota. User capacity dep
 | Sensitive KYC in client-readable docs | Critical | Server-owned/private data |
 | Large media in Firestore | High | Storage |
 | Payment and chat tightly coupled | Medium | Separate domains |
+
+## 14. Current Repository Implementation Map
+
+This section maps the design above to the inspected Flutter and Firebase source. Source code is authoritative when it differs from this snapshot.
+
+| Area | Main locations | Responsibility |
+|---|---|---|
+| Startup and app shell | `lib/main.dart`, `lib/home_screen.dart` | Initialize Firebase, route through the auth gate, and show the Chats, My Content, My Purchases, and Settings tabs. |
+| Authentication | `lib/services/auth/`, `lib/screens/login/`, `lib/screens/register/` | Email, Google, and phone authentication; auth-state routing; profile and presence helpers. |
+| Private chats | `lib/screens/products/chats/`, `lib/services/chats/` | Conversation lists and details, messages, polls, and contact-based identity resolution. |
+| Groups and channels | `lib/screens/products/groups/`, `lib/screens/products/channels/`, `lib/services/group/`, `lib/services/channel/` | Creation, membership, moderation, details, and conversation screens. |
+| Messaging and media | `lib/services/messaging_service.dart`, `lib/services/media_service.dart`, `lib/models/` | Message writes and streams, conversation metadata, media preparation/uploads, and message models. |
+| Locked content and purchases | `lib/screens/products/locked_messages/`, `lib/screens/products/purchase/`, `lib/services/purchase_service.dart` | Paid content, purchase views, and protected media access. |
+| Account and creator tools | `lib/screens/settings/`, `lib/services/wallet_service.dart`, `lib/services/admin/` | Profile, settings, earnings, wallet, verification, and creator management. |
+| Shared UI and utilities | `lib/components/`, `lib/utils/` | Reusable widgets, colors, contacts, logging, navigation, and formatting helpers. |
+| Backend and Firebase policy | `functions/`, `firebase.json`, `firestore.rules`, `firestore.indexes.json`, `storage.rules` | Payment/payout handlers, deployment configuration, access policies, and indexes. |
+
+### Observed runtime boundaries
+
+- `lib/main.dart` initializes Flutter and Firebase, configures Android debug App Check, and enables Firestore persistence. `AuthGate` listens to Firebase Auth and routes to login or `LockifyHomePage`.
+- Screens commonly use `StreamBuilder` for live Firebase data and `FutureBuilder` for one-time reads. Feature services contain reusable operations, while some screens still access Firebase directly.
+- `MessagingService` batches message writes with conversation metadata updates. Group and channel services also manage membership and reverse indexes.
+- `MediaService` prepares and uploads media. Firestore and Storage rules define access to messages and locked content.
+- `functions/index.js` exports payment and payout HTTP handlers. The client-to-function call site was not located during the source review; trace that integration before changing the payment journey.
+
+### Repository snapshot follow-ups
+
+- On 2026-10-24, `functions/index.js` imported `./payments/getUnlockedContent`, but `functions/payments/getUnlockedContent.js` was absent. Confirm whether it has been restored before running or deploying Functions.
+- Android uses the debug App Check provider in `lib/main.dart`; verify production provider configuration before release builds.
+- A Google Play Services broker log alone did not establish an app-level authentication failure. Diagnose with the actual Flutter/Firebase exception and device or emulator state.

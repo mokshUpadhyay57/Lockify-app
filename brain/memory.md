@@ -1,4 +1,5 @@
 # Lockify — Project Memory
+Last updated: 2026-10-24
 
 ## 1. Purpose
 
@@ -189,3 +190,17 @@ When changing Lockify architecture:
 6. Update `brain/prd.md` when product requirements change.
 
 Do not silently introduce a new architecture through implementation code alone.
+
+## 14. Assistant Working Notes
+
+- This file is the canonical project memory. Read it before project work and update it after completing work with concise, durable findings. Keep task history only when it helps future work; never store credentials, tokens, or personal data.
+- Keep changes scoped and preserve unrelated working-tree edits. For Flutter issues, focus on Flutter-specific files when requested and follow existing feature/service patterns. Report only checks that were actually run.
+- Before making architecture or runtime-flow claims, inspect current source and distinguish verified behavior from assumptions.
+- Flutter screens are feature-organized under `lib/screens/`; shared widgets/models are under `lib/components/` and `lib/models/`; Firebase helpers are under `lib/services/`. State/data access is mixed between reusable services and direct Firebase calls from screens.
+- Documentation ownership: `brain/architecture.md` is the architecture reference, `brain/memory.md` is the project memory, and `brain/project_rules.md` holds canonical GSD workflow rules. Root `Architecture.md` and `Memory.md` are absent.
+- Current adapter files are `adapters/AGENTS.md`, `adapters/CLAUDE.md`, and `adapters/GEMINI.md`.
+
+### Verified follow-up
+
+- `functions/index.js` imports `./payments/getUnlockedContent`, but `functions/payments/getUnlockedContent.js` was not present during the repository review. Recheck before Functions builds or deployment.
+- The Android Google Play Services broker warning was not tied to a confirmed app-level failure. If it recurs, capture the actual sign-in exception and device/emulator state.

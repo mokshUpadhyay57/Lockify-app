@@ -149,13 +149,7 @@ At the end of each wave or significant work block, create a state snapshot:
 - Breaking behavior when a specific model is unavailable
 - Duplicating canonical rules in adapters
 
-**Adapter Pattern:**
-```
-adapters/
-├── CLAUDE.md    # Optional Claude enhancements
-├── GEMINI.md    # Optional Gemini enhancements
-└── GPT_OSS.md   # Optional GPT/OSS enhancements
-```
+**Adapter Pattern:** Optional model-specific guidance is maintained in `adapters/CLAUDE.md` and `adapters/GEMINI.md`.
 
 Each adapter must begin with:
 > "Everything in this file is optional. For canonical rules, see PROJECT_RULES.md."
