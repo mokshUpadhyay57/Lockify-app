@@ -1,9 +1,8 @@
 import 'package:lockify/utils/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_contacts/contact.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:lockify/utils/contacts.dart';
 import 'package:lockify/utils/snackbar.dart';
-
 
 class ParticipantSelectionScreen extends StatefulWidget {
   final String title;
@@ -18,10 +17,12 @@ class ParticipantSelectionScreen extends StatefulWidget {
   });
 
   @override
-  State<ParticipantSelectionScreen> createState() => _ParticipantSelectionScreenState();
+  State<ParticipantSelectionScreen> createState() =>
+      _ParticipantSelectionScreenState();
 }
 
-class _ParticipantSelectionScreenState extends State<ParticipantSelectionScreen> {
+class _ParticipantSelectionScreenState
+    extends State<ParticipantSelectionScreen> {
   final TextEditingController searchController = TextEditingController();
   List<Contact> contacts = [];
   List<Contact> filteredContacts = [];
@@ -52,7 +53,13 @@ class _ParticipantSelectionScreenState extends State<ParticipantSelectionScreen>
     final lowerCaseQuery = query.toLowerCase();
     setState(() {
       filteredContacts =
-          contacts.where((contact) => contact.displayName.toLowerCase().contains(lowerCaseQuery)).toList();
+          contacts
+              .where(
+                (contact) => (contact.displayName ?? '').toLowerCase().contains(
+                  lowerCaseQuery,
+                ),
+              )
+              .toList();
     });
   }
 
@@ -79,33 +86,59 @@ class _ParticipantSelectionScreenState extends State<ParticipantSelectionScreen>
           if (isSubmitting)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2))),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: AppColors.white,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
             )
           else
             IconButton(
               icon: const Icon(Icons.check),
-              onPressed: selectedContacts.isEmpty ? null : () async {
-                setState(() => isSubmitting = true);
-                try {
-                  final List<String> participantPhones = selectedContacts
-                      .where((c) => c.phones.isNotEmpty)
-                      .map((c) => c.phones.first.number.replaceAll(RegExp(r'\D'), ''))
-                      .map((p) => p.length >= 10 ? p.substring(p.length - 10) : p)
-                      .toList();
+              onPressed:
+                  selectedContacts.isEmpty
+                      ? null
+                      : () async {
+                        setState(() => isSubmitting = true);
+                        try {
+                          final List<String> participantPhones =
+                              selectedContacts
+                                  .where((c) => c.phones.isNotEmpty)
+                                  .map(
+                                    (c) => c.phones.first.number.replaceAll(
+                                      RegExp(r'\D'),
+                                      '',
+                                    ),
+                                  )
+                                  .map(
+                                    (p) =>
+                                        p.length >= 10
+                                            ? p.substring(p.length - 10)
+                                            : p,
+                                  )
+                                  .toList();
 
-                  await widget.onConfirm(participantPhones);
-                  
-                  if (mounted) {
-                    Navigator.pop(context);
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    AppSnackBar.error(context, 'Error: ${e.toString()}');
-                  }
-                } finally {
-                  if (mounted) setState(() => isSubmitting = false);
-                }
-              },
+                          await widget.onConfirm(participantPhones);
+
+                          if (mounted) {
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            AppSnackBar.error(
+                              context,
+                              'Error: ${e.toString()}',
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => isSubmitting = false);
+                        }
+                      },
             ),
           const SizedBox(width: 10),
         ],
@@ -118,7 +151,11 @@ class _ParticipantSelectionScreenState extends State<ParticipantSelectionScreen>
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             child: Text(
               '${selectedContacts.length} Selected',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primaryPurple),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryPurple,
+              ),
             ),
           ),
           Padding(
@@ -129,40 +166,62 @@ class _ParticipantSelectionScreenState extends State<ParticipantSelectionScreen>
               decoration: InputDecoration(
                 hintText: 'Search contacts...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
           Expanded(
-            child: filteredContacts.isEmpty
-                ? const Center(child: Text('No contacts found.'))
-                : ListView.builder(
-                    itemCount: filteredContacts.length,
-                    itemBuilder: (context, index) {
-                      final contact = filteredContacts[index];
-                      final isSelected = selectedContacts.contains(contact);
-                      return ListTile(
-                        onTap: () => _toggleContactSelection(contact),
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.purple100,
-                          child: Text(
-                            contact.displayName.isNotEmpty ? contact.displayName[0].toUpperCase() : '?',
-                            style: const TextStyle(color: AppColors.primaryPurple, fontWeight: FontWeight.bold),
+            child:
+                filteredContacts.isEmpty
+                    ? const Center(child: Text('No contacts found.'))
+                    : ListView.builder(
+                      itemCount: filteredContacts.length,
+                      itemBuilder: (context, index) {
+                        final contact = filteredContacts[index];
+                        final isSelected = selectedContacts.contains(contact);
+                        final contactName = contact.displayName ?? '';
+                        return ListTile(
+                          onTap: () => _toggleContactSelection(contact),
+                          leading: CircleAvatar(
+                            backgroundColor: AppColors.purple100,
+                            child: Text(
+                              contactName.isNotEmpty
+                                  ? contactName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: AppColors.primaryPurple,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
-                        title: Text(contact.displayName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text(contact.phones.isNotEmpty ? contact.phones.first.number : 'No phone'),
-                        trailing: Icon(
-                          isSelected ? Icons.check_circle : Icons.circle_outlined,
-                          color: isSelected ? AppColors.primaryPurple : AppColors.grey,
-                        ),
-                      );
-                    },
-                  ),
+                          title: Text(
+                            contactName.isEmpty
+                                ? 'Unknown contact'
+                                : contactName,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            contact.phones.isNotEmpty
+                                ? contact.phones.first.number
+                                : 'No phone',
+                          ),
+                          trailing: Icon(
+                            isSelected
+                                ? Icons.check_circle
+                                : Icons.circle_outlined,
+                            color:
+                                isSelected
+                                    ? AppColors.primaryPurple
+                                    : AppColors.grey,
+                          ),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
     );
   }
 }
-

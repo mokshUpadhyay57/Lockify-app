@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:video_compress/video_compress.dart';
+import 'package:compress_video/video_compress_compat.dart';
 import 'package:lockify/models/messages.dart';
 import 'package:lockify/services/chats/chat_service.dart';
 import 'package:lockify/services/messaging_service.dart';

@@ -1087,7 +1087,7 @@ FlTitlesData _chartTitles({
             return const SizedBox.shrink();
           }
           return SideTitleWidget(
-            axisSide: meta.axisSide,
+            meta: meta,
             child: Text(
               leftFormatter(value),
               style: const TextStyle(fontSize: 10, color: AppColors.grey600),
@@ -1108,7 +1108,7 @@ FlTitlesData _chartTitles({
             return const SizedBox.shrink();
           }
           return SideTitleWidget(
-            axisSide: meta.axisSide,
+            meta: meta,
             child: Text(
               DateFormat('d MMM').format(buckets[index].date),
               style: const TextStyle(fontSize: 10, color: AppColors.grey600),

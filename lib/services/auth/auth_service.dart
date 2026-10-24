@@ -14,6 +14,8 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Future<void>? _googleSignInInitialization;
 
   // Cache for local contacts to avoid re-scanning the phone book
   List<Contact>? _cachedContacts;
@@ -50,7 +52,8 @@ class AuthService {
     for (var contact in localContacts) {
       if (contact.phones.isNotEmpty &&
           normalizePhone(contact.phones.first.number) == normalized) {
-        return contact.displayName;
+        final displayName = contact.displayName;
+        if (displayName != null && displayName.isNotEmpty) return displayName;
       }
     }
 
@@ -153,23 +156,16 @@ class AuthService {
   }
 
   Future<UserCredential> signInWithGoogle() async {
-    // Trigger the authentication flow
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    await _initializeGoogleSignIn();
+    final googleUser = await _googleSignIn.authenticate();
 
-    // Obtain the auth details from the request
-    final GoogleSignInAuthentication? googleAuth =
-        await googleUser?.authentication;
+    final googleAuth = googleUser.authentication;
 
-    // Create a new credential
     final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
+      idToken: googleAuth.idToken,
     );
 
-    // Once signed in, return the UserCredential
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(
-      credential,
-    );
+    final userCredential = await _auth.signInWithCredential(credential);
 
     // Save user data to Firestore if needed
     await _firestore.collection('users').doc(userCredential.user?.uid).set({
@@ -182,6 +178,10 @@ class AuthService {
     return userCredential;
   }
 
+  Future<void> _initializeGoogleSignIn() {
+    return _googleSignInInitialization ??= _googleSignIn.initialize();
+  }
+
   // sign out
   Future<void> signOut() async {
     try {
@@ -191,7 +191,8 @@ class AuthService {
         for (var provider in user.providerData) {
           if (provider.providerId == 'google.com') {
             // Sign out from Google
-            await GoogleSignIn().signOut();
+            await _initializeGoogleSignIn();
+            await _googleSignIn.signOut();
           }
         }
       } else {

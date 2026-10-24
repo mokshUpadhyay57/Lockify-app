@@ -10,7 +10,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:lockify/services/auth/auth_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:video_compress/video_compress.dart';
+import 'package:compress_video/video_compress_compat.dart';
 import 'package:path/path.dart' as p;
 import 'package:lockify/utils/app_logger.dart';
 import 'package:lockify/utils/snackbar.dart';
@@ -108,9 +108,9 @@ class CreateLockedMessageScreenState extends State<CreateLockedMessageScreen> {
   }
 
   Future<void> selectDocument() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null && result.files.single.path != null) {
-      setState(() => _selectedDocument = File(result.files.single.path!));
+    final result = await FilePicker.pickFile(type: FileType.any);
+    if (result?.path != null) {
+      setState(() => _selectedDocument = File(result!.path!));
     }
   }
 

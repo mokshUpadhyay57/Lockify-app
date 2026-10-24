@@ -70,9 +70,9 @@ class _ChatInputState extends State<ChatInput> {
 
   Future<void> _pickFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles();
-      if (result != null && result.files.single.path != null) {
-        widget.onSendMedia(File(result.files.single.path!), MediaType.document);
+      final result = await FilePicker.pickFile();
+      if (result?.path != null) {
+        widget.onSendMedia(File(result!.path!), MediaType.document);
       }
     } catch (e) {
       AppLogger.error('Error picking file', error: e);

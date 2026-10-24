@@ -1,4 +1,4 @@
-﻿
+
 ## Summary
 
 Moved withdrawal authorization and wallet accounting to Firebase Functions. Verified users can configure a server-side Cashfree beneficiary and request a payout from their available balance. Requests are deduplicated by request ID, atomically reserve funds, enforce the three-in-24-hours limit and seven-day cooldown, and settle idempotently through payout responses or a signed webhook. Firestore rules prevent clients from writing beneficiary, withdrawal, wallet, or verification state. Updated the earnings, bank setup, and expenditure flows to show configured status, submit requests, report failures, and count only completed withdrawals as debits.
@@ -113,3 +113,14 @@ Replaced raw withdrawal-stream exception text with concise retry guidance, added
 ### Commit
 
 - Implementation commit: `483c7ec` — `fix: clarify withdrawal history errors`.
+## Current checkout audit (2026-10-24)
+
+The current `main` checkout does not contain the implementation described above. The recorded factory branch `factory/001-withdrawal-system` is absent, and the listed implementation commits are not present in this checkout's Git history. Treat the preceding build and review results as historical handoff notes, not as validation of the current source tree.
+
+Current source evidence:
+
+- `lib/screens/settings/earning/earning_home_screen.dart` writes withdrawal records directly from the client, stores the full displayed balance as the request amount, and presents a “Withdrawal Successful” dialog immediately after submission. The balance label is “Balance” and the rupee text is mojibake.
+- `functions/index.js` logs the Cashfree authorization response, accepts beneficiary data from the HTTP request body, and exposes a callable transfer endpoint without the server-side wallet reservation and request lifecycle described in the historical build summary.
+- `lib/screens/settings/earning/withdrawal_history_screen.dart` displays raw Firestore errors, lacks wallet loading/error recovery, and uses a fixed three-card summary layout with “On hold” for pending funds.
+
+Review applicability for work in this checkout: **security** and **code** are required; **UX** is required because submission, status, error, and recovery flows are user-facing; **UI design** is required because the earnings and withdrawal-history screens and their visual states change. The round-5 UX and security findings remain directly applicable, while the current source also retains earlier UI/UX findings documented in rounds 1–4. Do not merge based on the historical PASS results; re-establish the implementation on the current project branch and review the resulting changes.

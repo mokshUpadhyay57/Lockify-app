@@ -361,7 +361,9 @@ class _ChannelSettingScreenState extends State<ChannelSettingScreen> {
                         icon: const Icon(Icons.share),
                         label: const Text("Share"),
                         onPressed: () {
-                          Share.share(channelLink);
+                          SharePlus.instance.share(
+                            ShareParams(text: channelLink),
+                          );
                         },
                       ),
                     ],

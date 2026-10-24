@@ -11,7 +11,7 @@ void main() async {
   await Firebase.initializeApp();
 
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug,
+    providerAndroid: const AndroidDebugProvider(),
   );
 
   FirebaseFirestore.instance.settings = const Settings(

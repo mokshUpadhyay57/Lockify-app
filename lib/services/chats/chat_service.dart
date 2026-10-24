@@ -39,7 +39,8 @@ class ChatService {
     for (var contact in contacts) {
       if (contact.phones.isNotEmpty &&
           normalizePhone(contact.phones.first.number) == normalized) {
-        return contact.displayName;
+        final displayName = contact.displayName;
+        if (displayName != null && displayName.isNotEmpty) return displayName;
       }
     }
     return phone;
@@ -184,7 +185,8 @@ class ChatService {
     for (final contact in contacts) {
       if (contact.phones.isNotEmpty &&
           normalizePhone(contact.phones.first.number) == normalizedTarget) {
-        return contact.displayName;
+        final displayName = contact.displayName;
+        if (displayName != null && displayName.isNotEmpty) return displayName;
       }
     }
     if (passedName != null && passedName != "User" && passedName.isNotEmpty)

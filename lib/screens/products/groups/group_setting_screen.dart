@@ -369,7 +369,9 @@ class _GroupSettingScreenState extends State<GroupSettingScreen> {
                         icon: const Icon(Icons.share),
                         label: const Text("Share"),
                         onPressed: () {
-                          Share.share(groupLink);
+                          SharePlus.instance.share(
+                            ShareParams(text: groupLink),
+                          );
                         },
                       ),
                     ],

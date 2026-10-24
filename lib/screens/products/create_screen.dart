@@ -14,7 +14,6 @@ import 'package:lockify/components/widgets/lockify_scaffold.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dart:ui';
 
-
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key});
 
@@ -54,16 +53,21 @@ class _CreateScreenState extends State<CreateScreen> {
   void _filterContacts(String query) {
     final lowerCaseQuery = query.toLowerCase();
     setState(() {
-      filteredContacts = contacts
-          .where((contact) =>
-              contact.displayName.toLowerCase().contains(lowerCaseQuery))
-          .toList();
+      filteredContacts =
+          contacts
+              .where(
+                (contact) => (contact.displayName ?? '').toLowerCase().contains(
+                  lowerCaseQuery,
+                ),
+              )
+              .toList();
     });
   }
 
   Future<void> _fetchVerificationStatus() async {
     final userId = ChannelService().getCurrentUserId();
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
     if (!mounted) return;
     setState(() {
       final status = userDoc.data()?['isVerified'];
@@ -137,20 +141,24 @@ class _CreateScreenState extends State<CreateScreen> {
                 child: ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: 6,
-                  itemBuilder: (context, index) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: Shimmer.fromColors(
-                      baseColor: AppColors.grey100,
-                      highlightColor: AppColors.white,
-                      child: Container(
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: AppColors.grey100,
-                          borderRadius: BorderRadius.circular(12),
+                  itemBuilder:
+                      (context, index) => Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        child: Shimmer.fromColors(
+                          baseColor: AppColors.grey100,
+                          highlightColor: AppColors.white,
+                          child: Container(
+                            height: 70,
+                            decoration: BoxDecoration(
+                              color: AppColors.grey100,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -180,34 +188,41 @@ class _CreateScreenState extends State<CreateScreen> {
                       color: AppColors.warningOrange,
                       icon: Icons.lock,
                       label: 'Locked\nMessage',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                const CreateLockedMessageScreen()),
-                      ),
+                      onTap:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      const CreateLockedMessageScreen(),
+                            ),
+                          ),
                     ),
                     _buildTopCard(
                       context,
                       color: Colors.blue,
                       icon: Icons.campaign,
                       label: 'Channel\non Lockify',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => CreateChannelScreen()),
-                      ),
+                      onTap:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CreateChannelScreen(),
+                            ),
+                          ),
                     ),
                     _buildTopCard(
                       context,
                       color: AppColors.primaryPurple,
                       icon: Icons.group,
                       label: 'Group\non Lockify',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CreateGroupScreen()),
-                      ),
+                      onTap:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CreateGroupScreen(),
+                            ),
+                          ),
                     ),
                   ],
                 ),
@@ -241,21 +256,25 @@ class _CreateScreenState extends State<CreateScreen> {
 
               // List of Contacts
               Expanded(
-                child: filteredContacts.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No contacts found.',
-                          style: TextStyle(fontSize: 16, color: AppColors.grey),
+                child:
+                    filteredContacts.isEmpty
+                        ? const Center(
+                          child: Text(
+                            'No contacts found.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.grey,
+                            ),
+                          ),
+                        )
+                        : ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: filteredContacts.length,
+                          itemBuilder: (context, index) {
+                            final contact = filteredContacts[index];
+                            return _buildContactCard(contact);
+                          },
                         ),
-                      )
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: filteredContacts.length,
-                        itemBuilder: (context, index) {
-                          final contact = filteredContacts[index];
-                          return _buildContactCard(contact);
-                        },
-                      ),
               ),
             ],
           ),
@@ -271,8 +290,15 @@ class _CreateScreenState extends State<CreateScreen> {
                     color: AppColors.primaryPurple.withOpacity(0.18),
                     alignment: Alignment.topCenter,
                     child: Container(
-                      margin: const EdgeInsets.only(top: 20, left: 24, right: 24),
-                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+                      margin: const EdgeInsets.only(
+                        top: 20,
+                        left: 24,
+                        right: 24,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 18,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryPurple.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(16),
@@ -289,7 +315,11 @@ class _CreateScreenState extends State<CreateScreen> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.warning_amber_rounded, color: AppColors.white, size: 28),
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: AppColors.white,
+                            size: 28,
+                          ),
                           const SizedBox(width: 14),
                           Expanded(
                             flex: 2,
@@ -308,14 +338,18 @@ class _CreateScreenState extends State<CreateScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ProfileVerificationScreen(),
+                                  builder:
+                                      (context) => ProfileVerificationScreen(),
                                 ),
                               );
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.white,
                               backgroundColor: AppColors.primaryPurple,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -338,6 +372,7 @@ class _CreateScreenState extends State<CreateScreen> {
   }
 
   Widget _buildContactCard(Contact contact) {
+    final contactName = contact.displayName ?? '';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
@@ -352,10 +387,15 @@ class _CreateScreenState extends State<CreateScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ChatDetailPage(
-                    recieverPhone: phone, // Pass the phone as is, normalization happens inside ChatDetailPage/Service
-                    recieverName: contact.displayName,
-                  ),
+                  builder:
+                      (context) => ChatDetailPage(
+                        recieverPhone:
+                            phone, // Pass the phone as is, normalization happens inside ChatDetailPage/Service
+                        recieverName:
+                            contactName.isEmpty
+                                ? 'Unknown contact'
+                                : contactName,
+                      ),
                 ),
               );
             } else {
@@ -376,8 +416,8 @@ class _CreateScreenState extends State<CreateScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      contact.displayName.isNotEmpty
-                          ? contact.displayName[0].toUpperCase()
+                      contactName.isNotEmpty
+                          ? contactName[0].toUpperCase()
                           : '?',
                       style: const TextStyle(
                         color: AppColors.primaryPurple,
@@ -395,7 +435,7 @@ class _CreateScreenState extends State<CreateScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        contact.displayName,
+                        contactName.isEmpty ? 'Unknown contact' : contactName,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
@@ -451,9 +491,9 @@ class _TopCard extends StatelessWidget {
   final String label;
 
   const _TopCard({
-    required this.color, 
-    required this.icon, 
-    required this.label
+    required this.color,
+    required this.icon,
+    required this.label,
   });
 
   @override
@@ -486,9 +526,7 @@ class _TopCard extends StatelessWidget {
               color: AppColors.white.withOpacity(0.18),
               shape: BoxShape.circle,
             ),
-            child: Center(
-              child: Icon(icon, size: 28, color: AppColors.white),
-            ),
+            child: Center(child: Icon(icon, size: 28, color: AppColors.white)),
           ),
           const SizedBox(height: 14),
           Text(
@@ -507,4 +545,3 @@ class _TopCard extends StatelessWidget {
     );
   }
 }
-

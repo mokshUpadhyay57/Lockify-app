@@ -6,10 +6,11 @@ import 'package:lockify/utils/snackbar.dart';
 Future<List<Contact>> getContacts(BuildContext context) async {
   try {
     // We only read contacts in this app flow, so request read-only access.
-    final hasPermission = await FlutterContacts.requestPermission(
-      readonly: true,
+    final permission = await FlutterContacts.permissions.request(
+      PermissionType.read,
     );
-    if (!hasPermission) {
+    if (permission != PermissionStatus.granted &&
+        permission != PermissionStatus.limited) {
       if (context.mounted) {
         AppSnackBar.error(
           context,
@@ -18,7 +19,7 @@ Future<List<Contact>> getContacts(BuildContext context) async {
       }
       return [];
     }
-    return await FlutterContacts.getContacts(withProperties: true);
+    return await FlutterContacts.getAll(properties: {ContactProperty.phone});
   } catch (e, stackTrace) {
     AppLogger.error(
       'Failed to load contacts',
