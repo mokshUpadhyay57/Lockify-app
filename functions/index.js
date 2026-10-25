@@ -3,7 +3,7 @@ const { getAuth } = require("firebase-admin/auth");
 const axios = require("axios");
 const logger = require("firebase-functions/logger");
 const { defineString } = require("firebase-functions/params");
-const { createOrder } = require("./payments/createOrder");
+const { createOrder, createEasySplitOrder } = require("./payments/createOrder");
 const { paymentSuccessWebhook } = require("./payments/success");
 const { verifyPayment } = require("./payments/verifyPayment");
 const { getUnlockedContent } = require("./payments/getUnlockedContent");
@@ -20,6 +20,7 @@ setGlobalOptions({
 
 // Create Order HTTP Function (used by client to initiate payment)
 exports.createOrder = createOrder;
+exports.createEasySplitOrder = createEasySplitOrder;
 exports.paymentSuccessWebhook = paymentSuccessWebhook;
 exports.verifyPayment = verifyPayment;
 exports.getUnlockedContent = getUnlockedContent;
@@ -31,6 +32,13 @@ const payoutAuthURL = defineString("CF_PAYOUT_AUTH_URL", {
 });
 const payoutBaseURL = defineString("CF_PAYOUT_BASE_URL", {
   default: "https://sandbox.cashfree.com/payout",
+});
+
+// Easy Split Sandbox configurations
+const easySplitClientId = defineString("CF_EASY_SPLIT_CLIENT_ID", { default: "" });
+const easySplitClientSecret = defineString("CF_EASY_SPLIT_CLIENT_SECRET", { default: "" });
+const easySplitBaseURL = defineString("CF_EASY_SPLIT_BASE_URL", {
+  default: "https://sandbox.cashfree.com/pg",
 });
 
 const auth = getAuth();
@@ -151,5 +159,47 @@ exports.requestTransfer = functions.https.onCall(async (data, context) => {
     }
     console.error("requestTransfer error:", errorMsg);
     throw new functions.https.HttpsError("internal", errorMsg);
+  }
+});
+
+// -----------------------------
+// 🔀 Easy Split: Add / Create Vendor HTTP Function (Sandbox)
+// -----------------------------
+exports.easySplitAddVendor = functions.https.onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "https://lockify.co.in");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).send({ error: "Method Not Allowed" });
+  }
+
+  try {
+    const uid = await verifyFirebaseToken(req);
+    logger.log("easySplitAddVendor called by UID:", uid);
+    logger.log("Request body:", req.body);
+
+    const clientId = easySplitClientId.value() || payoutClientId.value();
+    const clientSecret = easySplitClientSecret.value() || payoutClientSecret.value();
+
+    const response = await axios.post(`${easySplitBaseURL.value()}/easy-split/vendors`, req.body, {
+      headers: {
+        'x-client-id': clientId,
+        'x-client-secret': clientSecret,
+        'x-api-version': '2025-01-01',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    logger.log("easySplitAddVendor response:", response.data);
+    return res.status(200).send(response.data);
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || err.message || "Unknown error";
+    logger.error("easySplitAddVendor error:", errorMsg);
+    return res.status(500).send({ error: errorMsg, details: err.response?.data });
   }
 });
