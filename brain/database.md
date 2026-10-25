@@ -33,7 +33,7 @@ Lockify uses **Firebase Firestore** as its primary database with a denormalized,
 | `channels` | Broadcast channels | Membership index + batch fetch |
 | `lockedMessages` | Monetized content metadata (public) | Public reads, creator writes |
 | `lockedMessageContent` | Protected content (private) | Purchase-gated reads |
-| `purchases` | Purchase records (deprecated) | Buyer/creator reads |
+| `purchases` | Purchase/entitlement records referenced by access rules | Buyer/creator reads |
 | `order-items` | Order line items | Buyer/creator reads |
 | `wallets` | User wallet balances | Owner reads only |
 | `wallet_transactions` | Financial ledger | Owner reads, server writes |
@@ -58,7 +58,6 @@ Lockify uses **Firebase Firestore** as its primary database with a denormalized,
   username: string;               // Unique username
   name: string;                   // Display name
   phone: string;                  // Normalized phone (last 10 digits)
-  password: string;               // WARNING: Should not be stored!
   photoUrl?: string;              // Profile picture URL
   bio?: string;                   // User bio
   isVerified: boolean;            // Profile verification status
@@ -84,7 +83,7 @@ Lockify uses **Firebase Firestore** as its primary database with a denormalized,
 
 **Notes**:
 - Phone numbers are normalized to last 10 digits for matching
-- `password` field should be removed (security risk)
+- Authentication credentials belong in Firebase Authentication, not the profile document.
 - Public profile data should be moved to separate collection
 
 ---
@@ -426,7 +425,7 @@ exists(/databases/$(database)/documents/purchases/$(uid_messageId))
 
 ### 10. purchases/{purchaseId}
 
-**Purpose**: Purchase records (DEPRECATED — use order-items)
+**Purpose**: Purchase/entitlement records used by access checks alongside order line records.
 
 **Document ID Format**: `{buyerId}_{lockedMessageId}`
 
@@ -447,14 +446,13 @@ exists(/databases/$(database)/documents/purchases/$(uid_messageId))
 - Write: Server only (via Cloud Functions)
 
 **Notes**:
-- Legacy collection, being replaced by `order-items`
-- Supports both UID-based and phone-based purchases
+- Supports UID-based and legacy phone-based purchase ownership.
 
 ---
 
 ### 11. order-items/{orderItemId}
 
-**Purpose**: Order line items (replaces purchases)
+**Purpose**: Purchase line items associated with an order.
 
 **Structure**:
 ```typescript
@@ -745,327 +743,45 @@ withdrawals/{withdrawalId} [payout requests]
 
 ---
 
-## Indexes Required
+## Relationships and Query Patterns
 
-### Compound Indexes (firestore.indexes.json)
+- **Room membership:** `users/{uid}/memberships/{roomId}` indexes a user’s group/channel memberships; room documents also retain participant fields for legacy and direct queries.
+- **Messages:** chats, groups, and channels store messages under their parent document. Query recent messages by timestamp, paginate, and close listeners when screens dispose.
+- **Locked content:** `lockedMessages` stores shareable metadata; `lockedMessageContent` stores protected fields. Purchase access checks currently reference `purchases`; `order-items` stores order-line records. Keep both paths in mind during migrations.
+- **Financial records:** `wallet_transactions` is the event history; `wallets` is a derived balance summary. Withdrawals link to the creator account.
+- **Identity:** UID is the primary identity; phone-based fields remain for legacy lookup. Follow existing phone normalization and dual-query behavior until migration is complete.
+- Denormalized names and membership indexes reduce reads, but every duplicated field needs a consistent update path.
 
-```json
-{
-  "indexes": [
-    {
-      "collectionGroup": "messages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "order-items",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "buyerId", "order": "ASCENDING" },
-        { "fieldPath": "purchasedAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "wallet_transactions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "lockedMessages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "createdBy", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    }
-  ]
-}
-```
+## Indexes
 
----
+`firestore.indexes.json` is the source of truth for deployed index definitions. Check it when changing a query; do not maintain a second copy of the index JSON here.
 
-## Caching Strategy
+## Security Boundaries
 
-### Service-Level Caches
+`firestore.rules` and `storage.rules` define actual access. This document describes data shape, not authorization. Keep payment verification, purchase finalization, wallet/ledger writes, and payout processing server-side. Never store authentication credentials in user documents; use Firebase Authentication.
 
-**AuthService**:
-- `_cachedContacts` — 5-minute TTL for local contacts
-- Cleared on logout
+## Operational Constraints
 
-**GroupService / ChannelService**:
-- `_memberCache: Map<roomId, Member[]>` — In-memory member lists
-- No TTL (invalidated manually)
+- Firestore documents are limited to 1 MiB; keep media binaries in Firebase Storage.
+- Bound reads and listeners, paginate message history, and monitor hot financial documents.
+- Financial updates must be atomic and retry-safe; see [Architecture](architecture.md) and [Engineering & Security Rules](rules.md).
 
-**ContactService**:
-- Contact name resolution cache
-- Backed by local device contacts
+## Known Data Constraints
 
----
+- Current Firestore rules allow any authenticated user to read `users/{userId}` for existing lookup flows. Recheck those flows before narrowing access; prefer separating public profile fields from private account data.
+- Firestore and Storage rules use `purchases` for paid-content access. Do not remove or rename it until rules, backend writes, and stored records have a verified migration.
+- Membership is represented both by room participant fields and per-user membership documents. Keep both consistent through existing service paths.
+- The schema includes legacy phone identifiers alongside UIDs. Preserve compatibility deliberately and remove it only through a tested migration.
 
-## Security Model
+## Schema Change Checklist
 
-### Authentication Layers
-```
-Flutter Client (untrusted)
-  ↓
-Firebase Auth (identity boundary)
-  ↓
-Firestore Rules (document-level access)
-  ↓
-Cloud Functions (privileged operations)
-  ↓
-Cashfree (payment provider)
-```
-
-### Server-Only Operations
-
-1. **Purchase finalization** (Cloud Functions)
-2. **Wallet balance updates** (Cloud Functions)
-3. **Withdrawal processing** (Cloud Functions)
-4. **Transaction ledger writes** (Cloud Functions)
-5. **Payment verification** (Webhook handlers)
-
-### Client-Allowed Operations
-
-1. Chat message creation
-2. Group/channel creation
-3. Locked message metadata creation (public fields only)
-4. Profile updates (own profile)
-5. Withdrawal request creation (not processing)
-
----
-
-## Query Optimization Patterns
-
-### 1. Reverse Index Pattern
-**Problem**: Can't query `array-contains` with `orderBy`
-
-**Solution**:
-```typescript
-// Instead of:
-groups.where('participantUids', 'array-contains', uid).orderBy('lastMessageTimestamp')
-
-// Use:
-users/{uid}/memberships → [groupId1, groupId2, ...]
-→ Batch fetch groups by IDs
-→ Sort in memory
-```
-
-### 2. Dual Query Merge
-**Problem**: Support both UID and phone lookups
-
-**Solution**:
-```typescript
-// Merge two streams:
-Stream 1: where('participantUids', 'array-contains', uid)
-Stream 2: where('participantPhones', 'array-contains', phone)
-→ StreamController merges + deduplicates by roomID
-```
-
-### 3. Denormalized Name Cache
-**Problem**: Resolving phone → name on every message
-
-**Solution**:
-```typescript
-// Store in room document:
-participantNames: { [phone: string]: string }
-// Update when name changes
-```
-
-### 4. Paginated Messages
-**Problem**: Loading entire chat history
-
-**Solution**:
-```typescript
-messages
-  .orderBy('timestamp', descending: true)
-  .limit(50)
-  .startAfter(lastVisible) // For pagination
-```
-
----
-
-## Data Migration Notes
-
-### Phone Normalization
-- **Old**: Raw phone strings (`+919876543210`, `9876543210`)
-- **New**: Last 10 digits (`9876543210`)
-- **Migration**: Both formats supported via dual queries
-
-### UID Migration
-- **Old**: Phone-only identification
-- **New**: Firebase UID as primary
-- **Fields**: Added `uid` alongside `phone` in most collections
-- **Compatibility**: Rules check both `buyerId` and `buyerPhone`
-
-### Purchase Schema Evolution
-```
-purchases/{buyerId}_{messageId}  [DEPRECATED]
-  ↓
-order-items/{orderItemId}        [CURRENT]
-```
-
----
-
-## Backup and Recovery
-
-### Cloud Functions Idempotency
-All financial operations use idempotency keys:
-```typescript
-const idempotencyKey = `${orderId}_${lockedMessageId}`;
-// Check if already processed before creating records
-```
-
-### Webhook Retry Safety
-```typescript
-1. Verify signature
-2. Check if purchase exists (idempotency)
-3. If exists → return success
-4. If not → create transaction (atomic)
-```
-
-### Firestore Transaction Usage
-```typescript
-// Atomic purchase finalization:
-await firestore.runTransaction(async (transaction) => {
-  // 1. Create purchase record
-  // 2. Create wallet transactions
-  // 3. Update wallet balance
-  // All or nothing
-});
-```
-
----
-
-## Performance Considerations
-
-### Document Size Limits
-- Max document size: **1 MB**
-- Large arrays (`participantUids`) monitored for growth
-- Media stored in Firebase Storage, not Firestore
-
-### Read Optimization
-- Use `limit()` on all unbounded queries
-- Stream only active conversations
-- Cache member lists to avoid repeated subcollection reads
-
-### Write Optimization
-- Batch writes for multi-document updates
-- Use `FieldValue.increment()` for counters
-- Avoid contention on hot documents (e.g., wallet balance)
-
-### Index Overhead
-- Each index adds write cost
-- Monitor index usage via Firebase Console
-- Remove unused indexes
-
----
-
-## Development Guidelines
-
-### 1. Adding New Collections
-- Define schema in this document
-- Write Firestore security rules
-- Add indexes if compound queries needed
-- Update service layer
-- Test access rules
-
-### 2. Modifying Existing Schema
-- Check for backward compatibility
-- Support dual-read for migrations
-- Update all query patterns
-- Version sensitive changes
-
-### 3. Financial Operations
-- Always use Cloud Functions
-- Implement idempotency
-- Write to ledger before updating balance
-- Log all operations
-
-### 4. Real-Time Listeners
-- Close streams on dispose
-- Handle null/empty states
-- Debounce rapid updates
-- Use pagination
-
----
-
-## Monitoring and Debugging
-
-### Key Metrics to Track
-- Read/Write operations per collection
-- Query latency
-- Failed transactions
-- Webhook retry count
-- Wallet balance reconciliation
-
-### Debug Queries
-```typescript
-// Find users with balance discrepancy:
-wallets.where('balance', '>', 0)
-
-// Check recent failures:
-wallet_transactions.where('status', '==', 'failed')
-  .orderBy('timestamp', 'desc')
-  .limit(10)
-```
-
----
-
-## Known Issues and Technical Debt
-
-### Security Issues
-1. Audit existing user documents for legacy password fields and remove any found; credentials belong in Firebase Authentication.
-2. ⚠️ **Any authenticated user can read user documents** under the current Firestore rules. Separate public profile data from private metadata or narrow read access.
-
-### Schema Issues
-1. Dual UID/phone support adds complexity
-2. `purchases` collection deprecated but still in use
-3. Member arrays grow unbounded (need pagination strategy)
-
-### Performance Issues
-1. No limit on group/channel member count
-2. Message pagination not implemented everywhere
-3. Contact syncing can be slow with large contact lists
-
----
-
-## Future Improvements
-
-### 1. Sharding Hot Documents
-For high-traffic creators, shard wallet balance across multiple documents to avoid contention.
-
-### 2. Analytics Collections
-Add dedicated analytics collections for:
-- Daily active users
-- Purchase funnel metrics
-- Creator earnings trends
-
-### 3. Search Indexing
-Integrate Algolia or Typesense for:
-- User search
-- Content discovery
-- Group/channel search
-
-### 4. Archival Strategy
-Move old messages to cold storage after 6 months to reduce costs.
-
----
+When changing a collection, update this reference, the relevant client/service and Cloud Function code, security rules, and indexes. Add tests for access and financial behavior where applicable. Verify the live schema against source before treating this document as current.
 
 ## Related Documentation
 
-- [App Flow](appflow.md) — User journey documentation
-- [Architecture](architecture.md) — System architecture overview
-- [Firestore Rules](../firestore.rules) — Security rules implementation
-- [Firestore Indexes](../firestore.indexes.json) — Compound index definitions
-
----
-
-**Last Updated**: 2026-10-01  
-**Schema Version**: 1.0  
-**Firestore Rules Version**: 2
+- [App Flow](appflow.md)
+- [Architecture](architecture.md)
+- [Engineering & Security Rules](rules.md)
+- [Firestore Rules](../firestore.rules)
+- [Storage Rules](../storage.rules)
+- [Firestore Indexes](../firestore.indexes.json)

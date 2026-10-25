@@ -193,7 +193,9 @@ Do not silently introduce a new architecture through implementation code alone.
 
 ## 14. Assistant Working Notes
 
-- This file is the canonical project memory. Read it before project work and update it after completing work with concise, durable findings. Keep task history only when it helps future work; never store credentials, tokens, or personal data.
+- Before any work, read this file, `brain/architecture.md`, `brain/roadmap.md`, `adapters/AGENTS.md`, and any more specific applicable `AGENTS.md`. After work, update this file's existing `Last updated` line and concise durable context; do not append repetitive task logs. Review and update other project references only when the change makes them stale.
+- The `brain/project_rules.md` pre-work and post-work documentation check applies to direct work and factory jobs. Factory builders record updated/reviewed project docs in `build.md`; update roadmap only when product scope, sequence, status, or exit criteria change.
+- This file is the canonical compact project memory. Keep task history only when it helps future work; never store credentials, tokens, or personal data.
 - Keep changes scoped and preserve unrelated working-tree edits. For Flutter issues, focus on Flutter-specific files when requested and follow existing feature/service patterns. Report only checks that were actually run.
 - Before making architecture or runtime-flow claims, inspect current source and distinguish verified behavior from assumptions.
 - Flutter screens are feature-organized under `lib/screens/`; shared widgets/models are under `lib/components/` and `lib/models/`; Firebase helpers are under `lib/services/`. State/data access is mixed between reusable services and direct Firebase calls from screens.

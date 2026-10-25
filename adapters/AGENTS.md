@@ -1,6 +1,6 @@
 # Agent Guide
 
-These instructions apply to `adapters/`; the repository root `AGENTS.md` also applies. For canonical GSD process, follow [`brain/project_rules.md`](../brain/project_rules.md).
+This is the shared project agent guide stored in adapters/; it applies to all repository work, including adapter changes. For canonical GSD process, follow [brain/project_rules.md](../brain/project_rules.md).
 
 ## Project and workflow
 
@@ -26,3 +26,10 @@ These instructions apply to `adapters/`; the repository root `AGENTS.md` also ap
 
 - `.agent/workflows/`, `.agents/`, `.gsd/`, `adapters/`, and `brain/project_rules.md` support the project’s GSD methodology. Follow applicable workflow/skill guidance and avoid duplicating its detailed process here.
 - Check `skills/` for Lockify-specific Flutter, Firestore, and payment practices; consult `README.md` for setup and architecture.
+
+## Required project context
+
+- Before starting work, read `brain/memory.md`, `brain/architecture.md`, and `brain/roadmap.md`, then check this guide and any more specific `AGENTS.md` that applies.
+- After work, refresh the existing `Last updated` line and concise durable notes in `brain/memory.md`. Review architecture, roadmap, app flow, database, and other relevant references; update only those made stale by the change. Roadmap tracks product scope, sequence, status, and completion, not documentation chores.
+- Factory builders follow the same checks and record project docs reviewed or updated in the job's `build.md`.
+- Do not append repetitive task logs or duplicate the same facts across docs.

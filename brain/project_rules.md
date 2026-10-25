@@ -54,6 +54,12 @@ Every change requires verification evidence:
 
 **Anti-pattern**: Reading entire files "to understand the context" without searching first.
 
+## Project Documentation Check
+
+Before starting any task, read `brain/memory.md`, `brain/architecture.md`, and `brain/roadmap.md`, plus `adapters/AGENTS.md` and any more specific `AGENTS.md` that applies to the files being changed. Search and read other `brain/` references only when relevant to the task.
+
+After implementation, update the existing `Last updated` line and durable project context in `brain/memory.md`. Review architecture, roadmap, app flow, database, rules, design, PRD, and environment references for staleness; update only documents affected by the change. Update `roadmap.md` when product scope, sequencing, status, or exit criteria change. Do not add task logs or duplicate facts across documents. Verify docs against source/configuration and report which references changed or were reviewed without edits.
+
 ---
 
 ## Delegation
@@ -262,6 +268,8 @@ scripts/                  # Utility scripts
 | File >200 lines | Use outline, not full file |
 | File already understood | Reference summary, don't reload |
 | >5 files needed | Stop, reconsider approach |
+
+The required pre-work read of `memory.md`, `architecture.md`, `roadmap.md`, `adapters/AGENTS.md`, and any applicable `AGENTS.md` is an exception to the file-count guideline. Keep the read lightweight when a task is unrelated; load other references just in time.
 
 ### Budget Thresholds
 
