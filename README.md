@@ -1,4 +1,4 @@
-`# Lockify
+# Lockify
 
 Lockify is a high-performance, multi-platform messaging and creator platform built with **Flutter** and **Firebase**. It provides a professional communication suite (1-1, Groups, Channels) combined with a powerful monetization engine for digital content and creator engagement.
 
